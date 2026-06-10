@@ -1,0 +1,586 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "GSAD API",
+    "version": "1.0.0",
+    "description": "GPU Server Access Dashboard — API contract maintained in the frontend repo for Apifox import and `npm run generate:api-types`. Aligns with Spring Boot gsad controllers; compare with backend `/v3/api-docs` when the server is running."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5173",
+      "description": "Vite dev server (proxies /api to VITE_PROXY_TARGET)"
+    },
+    {
+      "url": "http://localhost:8080",
+      "description": "Backend direct (default VITE_PROXY_TARGET)"
+    }
+  ],
+  "tags": [
+    { "name": "Authentication", "description": "User registration and login" },
+    { "name": "Servers", "description": "Public server board (no auth)" },
+    { "name": "Applications", "description": "Resource access applications (JWT required)" }
+  ],
+  "paths": {
+    "/api/auth/login": {
+      "post": {
+        "tags": ["Authentication"],
+        "operationId": "login",
+        "summary": "Login and obtain JWT",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthResponseEnvelope" },
+                "example": {
+                  "code": "",
+                  "message": "ok",
+                  "data": {
+                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImRlbW9AZXhhbXBsZS5jb20iLCJyb2xlcyI6W119.mock",
+                    "email": "demo@example.com",
+                    "roles": []
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": ["Authentication"],
+        "operationId": "register",
+        "summary": "Register a new user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegisterRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registration successful",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthResponseEnvelope" },
+                "example": {
+                  "code": "",
+                  "message": "ok",
+                  "data": {
+                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImRlbW9AZXhhbXBsZS5jb20iLCJyb2xlcyI6W119.mock",
+                    "email": "demo@example.com",
+                    "roles": []
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/api/servers": {
+      "get": {
+        "tags": ["Servers"],
+        "operationId": "listServers",
+        "summary": "List all servers with GPU summary",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Server list",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ServerListEnvelope" },
+                "example": {
+                  "code": "",
+                  "message": "ok",
+                  "data": {
+                    "items": [
+                      {
+                        "id": "1",
+                        "hostname": "gpu-node-01",
+                        "resourceLevel": "H100",
+                        "status": "ONLINE",
+                        "lastReportedAt": "2026-05-18T08:00:00Z",
+                        "collectedAt": "2026-05-18T08:00:00Z",
+                        "summary": { "gpuCount": 8, "avgUtil": 0.42, "avgMemUsedMb": 32768 },
+                        "gpus": [
+                          {
+                            "index": 0,
+                            "name": "NVIDIA H100",
+                            "avgUtil": 0.35,
+                            "memUsedMb": 40960,
+                            "memTotalMb": 81920
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "502": { "$ref": "#/components/responses/BadGateway" }
+        }
+      }
+    },
+    "/api/applications": {
+      "post": {
+        "tags": ["Applications"],
+        "operationId": "createApplication",
+        "summary": "Submit a new resource application",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "UUID for idempotent submission; the frontend sends a fresh value on each submit.",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateApplicationRequest" },
+              "example": {
+                "serverId": "gpu-mock-001",
+                "purpose": "大模型预训练",
+                "requestedDays": 7,
+                "requestedStartAt": "2026-05-19T00:00:00Z"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Application created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApplicationResponseEnvelope" },
+                "example": {
+                  "code": "",
+                  "message": "ok",
+                  "data": {
+                    "id": "app-mock001",
+                    "serverId": "gpu-mock-001",
+                    "resourceLevel": "H100",
+                    "purpose": "联调",
+                    "requestedDays": 7,
+                    "requestedStartAt": "2026-05-19T00:00:00Z",
+                    "expireAt": "2026-05-26T00:00:00Z",
+                    "auditStatus": "APPROVED",
+                    "comment": null,
+                    "createdAt": "2026-05-18T08:00:00Z",
+                    "updatedAt": "2026-05-18T08:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "502": { "$ref": "#/components/responses/BadGateway" }
+        }
+      }
+    },
+    "/api/applications/mine": {
+      "get": {
+        "tags": ["Applications"],
+        "operationId": "listMyApplications",
+        "summary": "List my applications (paginated)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "Filter by audit status",
+            "schema": { "$ref": "#/components/schemas/AuditStatus" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number (1-based)",
+            "schema": { "type": "integer", "minimum": 1, "default": 1 }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "description": "Page size (max 100)",
+            "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated application list",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PageResultApplicationEnvelope" },
+                "example": {
+                  "code": "",
+                  "message": "ok",
+                  "data": {
+                    "items": [
+                      {
+                        "id": "app-mock001",
+                        "serverId": "1",
+                        "resourceLevel": "H100",
+                        "purpose": "联调",
+                        "requestedDays": 7,
+                        "requestedStartAt": "2026-05-19T00:00:00Z",
+                        "expireAt": "2026-05-26T00:00:00Z",
+                        "auditStatus": "ACTIVE",
+                        "comment": null,
+                        "serverIp": "10.0.0.101",
+                        "sshUsername": "ubuntu",
+                        "initialPassword": "ApifoxMock-Demo",
+                        "createdAt": "2026-05-18T08:00:00Z",
+                        "updatedAt": "2026-05-18T08:00:00Z"
+                      }
+                    ],
+                    "total": 1,
+                    "page": 1,
+                    "pageSize": 20
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT from login/register; store as GSAD_TOKEN in the frontend."
+      }
+    },
+    "schemas": {
+      "ErrorCode": {
+        "type": "string",
+        "enum": [
+          "INVALID_ARGUMENT",
+          "UNAUTHORIZED",
+          "FORBIDDEN",
+          "NOT_FOUND",
+          "STATE_CONFLICT",
+          "RATE_LIMITED",
+          "UPSTREAM_NETBIRD_ERROR"
+        ]
+      },
+      "AuditStatus": {
+        "type": "string",
+        "enum": ["APPROVED", "ACTIVE", "EXPIRED", "FAILED_GRANT", "FAILED_REVOKE"]
+      },
+      "ServerStatus": {
+        "type": "string",
+        "enum": ["ONLINE", "OFFLINE", "MAINTENANCE"]
+      },
+      "ResourceLevel": {
+        "type": "string",
+        "description": "GPU tier enum used when creating applications",
+        "enum": ["H100", "A100", "L40S", "L4", "T4"]
+      },
+      "ErrorEnvelope": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": { "$ref": "#/components/schemas/ErrorCode" },
+          "message": { "type": "string" },
+          "data": { "nullable": true }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "format": "password" }
+        }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "format": "password", "minLength": 8 }
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "required": ["token", "email", "roles"],
+        "properties": {
+          "token": { "type": "string", "description": "JWT access token" },
+          "email": { "type": "string", "format": "email" },
+          "roles": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      },
+      "AuthResponseEnvelope": {
+        "type": "object",
+        "required": ["code", "message", "data"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Empty string on success",
+            "example": ""
+          },
+          "message": { "type": "string", "example": "ok" },
+          "data": { "$ref": "#/components/schemas/AuthResponse" }
+        }
+      },
+      "CreateApplicationRequest": {
+        "type": "object",
+        "required": ["serverId", "purpose", "requestedDays", "requestedStartAt"],
+        "description": "Submit application for a specific GPU server (Jackson camelCase).",
+        "properties": {
+          "serverId": {
+            "type": "string",
+            "description": "Target server id from GET /api/servers"
+          },
+          "purpose": { "type": "string", "maxLength": 500 },
+          "requestedDays": { "type": "integer", "minimum": 1 },
+          "requestedStartAt": { "type": "string", "format": "date-time" },
+          "sshPassword": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "description": "Optional SSH password for the granted account"
+          }
+        }
+      },
+      "ApplicationVO": {
+        "type": "object",
+        "description": "Application record; SSH fields appear when auditStatus is ACTIVE.",
+        "properties": {
+          "id": { "type": "string" },
+          "serverId": { "type": "string" },
+          "resourceLevel": { "type": "string" },
+          "purpose": { "type": "string" },
+          "requestedDays": { "type": "integer" },
+          "requestedStartAt": { "type": "string", "format": "date-time" },
+          "expireAt": { "type": "string", "format": "date-time", "nullable": true },
+          "auditStatus": { "$ref": "#/components/schemas/AuditStatus" },
+          "comment": { "type": "string", "nullable": true },
+          "serverIp": { "type": "string", "description": "Shown in UI when ACTIVE" },
+          "sshUsername": { "type": "string" },
+          "initialPassword": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ApplicationResponseEnvelope": {
+        "type": "object",
+        "required": ["code", "message", "data"],
+        "properties": {
+          "code": { "type": "string", "example": "" },
+          "message": { "type": "string", "example": "ok" },
+          "data": { "$ref": "#/components/schemas/ApplicationVO" }
+        }
+      },
+      "PageResultApplication": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ApplicationVO" }
+          },
+          "total": { "type": "integer", "format": "int64" },
+          "page": { "type": "integer" },
+          "pageSize": { "type": "integer" }
+        }
+      },
+      "PageResultApplicationEnvelope": {
+        "type": "object",
+        "required": ["code", "message", "data"],
+        "properties": {
+          "code": { "type": "string", "example": "" },
+          "message": { "type": "string", "example": "ok" },
+          "data": { "$ref": "#/components/schemas/PageResultApplication" }
+        }
+      },
+      "GpuSummaryBlock": {
+        "type": "object",
+        "properties": {
+          "gpuCount": { "type": "integer" },
+          "avgUtil": {
+            "type": "number",
+            "format": "double",
+            "description": "Average GPU utilization, 0~1"
+          },
+          "avgMemUsedMb": { "type": "integer" }
+        }
+      },
+      "GpuRow": {
+        "type": "object",
+        "properties": {
+          "index": { "type": "integer" },
+          "name": { "type": "string" },
+          "avgUtil": { "type": "number", "format": "double", "description": "0~1" },
+          "memUsedMb": { "type": "integer" },
+          "memTotalMb": { "type": "integer" }
+        }
+      },
+      "ServerVO": {
+        "type": "object",
+        "description": "Public server row with stable id and GPU metrics.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable server id used when submitting applications"
+          },
+          "hostname": { "type": "string" },
+          "resourceLevel": { "type": "string" },
+          "status": { "$ref": "#/components/schemas/ServerStatus" },
+          "lastReportedAt": { "type": "string", "format": "date-time", "nullable": true },
+          "collectedAt": { "type": "string", "format": "date-time", "nullable": true },
+          "summary": { "$ref": "#/components/schemas/GpuSummaryBlock", "nullable": true },
+          "gpus": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/GpuRow" }
+          }
+        }
+      },
+      "ServerListData": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ServerVO" }
+          }
+        }
+      },
+      "ServerListEnvelope": {
+        "type": "object",
+        "required": ["code", "message", "data"],
+        "properties": {
+          "code": { "type": "string", "example": "" },
+          "message": { "type": "string", "example": "ok" },
+          "data": { "$ref": "#/components/schemas/ServerListData" }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid argument or validation failure",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorEnvelope" },
+            "example": {
+              "code": "INVALID_ARGUMENT",
+              "message": "email: must not be blank",
+              "data": null
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Not authenticated or invalid credentials",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorEnvelope" },
+            "example": {
+              "code": "UNAUTHORIZED",
+              "message": "Not authenticated",
+              "data": null
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Insufficient permissions",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorEnvelope" },
+            "example": {
+              "code": "FORBIDDEN",
+              "message": "权限不足",
+              "data": null
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorEnvelope" },
+            "example": {
+              "code": "NOT_FOUND",
+              "message": "资源不存在或已变更",
+              "data": null
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "State conflict (e.g. duplicate registration)",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorEnvelope" },
+            "example": {
+              "code": "STATE_CONFLICT",
+              "message": "状态已变更，请刷新后重试",
+              "data": null
+            }
+          }
+        }
+      },
+      "TooManyRequests": {
+        "description": "Rate limited",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorEnvelope" },
+            "example": {
+              "code": "RATE_LIMITED",
+              "message": "请求过于频繁，请稍后再试",
+              "data": null
+            }
+          }
+        }
+      },
+      "BadGateway": {
+        "description": "Upstream NetBird or dependency error",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorEnvelope" },
+            "example": {
+              "code": "UPSTREAM_NETBIRD_ERROR",
+              "message": "上游服务暂时不可用，请稍后重试",
+              "data": null
+            }
+          }
+        }
+      }
+    }
+  }
+}
