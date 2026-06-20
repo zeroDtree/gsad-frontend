@@ -52,10 +52,9 @@ function normalizeGpuRow(raw: NonNullable<ServerVO['gpus']>[number]): GpuRow | n
 /** Normalize a public server row from gsad JSON (camelCase) into PublicServerItem. */
 export function normalizePublicServerItem(raw: ServerVO): PublicServerItem | null {
   const id = asServerId(raw.id)
-  const hostname = asNonEmptyString(raw.hostname)
   const resourceLevel = asNonEmptyString(raw.resourceLevel)
   const status = asNonEmptyString(raw.status)
-  if (!id || !hostname || !resourceLevel || !status) return null
+  if (!id || !resourceLevel || !status) return null
   const lastReportedAt =
     raw.lastReportedAt === null || raw.lastReportedAt === undefined
       ? null
@@ -80,7 +79,6 @@ export function normalizePublicServerItem(raw: ServerVO): PublicServerItem | nul
 
   return {
     id,
-    hostname,
     resourceLevel,
     status,
     lastReportedAt,

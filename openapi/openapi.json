@@ -111,8 +111,7 @@
                   "data": {
                     "items": [
                       {
-                        "id": "1",
-                        "hostname": "gpu-node-01",
+                        "id": "gpu-mock-001",
                         "resourceLevel": "H100",
                         "status": "ONLINE",
                         "lastReportedAt": "2026-05-18T08:00:00Z",
@@ -458,7 +457,6 @@
             "type": "string",
             "description": "Stable server id used when submitting applications"
           },
-          "hostname": { "type": "string" },
           "resourceLevel": { "type": "string" },
           "status": { "$ref": "#/components/schemas/ServerStatus" },
           "lastReportedAt": { "type": "string", "format": "date-time", "nullable": true },

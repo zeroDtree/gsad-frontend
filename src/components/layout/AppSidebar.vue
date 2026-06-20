@@ -30,7 +30,7 @@ function linkClass(nav: string) {
     class="sticky top-0 flex h-svh w-56 shrink-0 flex-col border-r border-slate-200 bg-zinc-50/80 backdrop-blur-sm"
   >
     <div class="shrink-0 px-4 pb-2 pt-5">
-      <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">GSAD</p>
+      <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400" title="GPU Server Access Dashboard">GSAD</p>
       <p class="mt-0.5 text-sm font-semibold tracking-tight text-slate-900">资源控制台</p>
     </div>
 

@@ -33,7 +33,7 @@ async function onSubmit() {
 
 <template>
   <div class="flex min-h-svh flex-col items-center justify-center px-4 py-12">
-    <AuthCard title="登录" subtitle="使用组织账号访问 GSAD 控制台">
+    <AuthCard title="登录" subtitle="使用组织账号访问 GSAD（GPU Server Access Dashboard）控制台">
       <form class="space-y-4" @submit.prevent="onSubmit">
         <div>
           <label class="mb-1.5 block text-xs font-medium text-slate-600" for="login-email"

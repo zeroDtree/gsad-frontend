@@ -216,7 +216,6 @@ export interface components {
         ServerVO: {
             /** @description Stable server id used when submitting applications */
             id?: string;
-            hostname?: string;
             resourceLevel?: string;
             status?: components["schemas"]["ServerStatus"];
             /** Format: date-time */
@@ -454,8 +453,7 @@ export interface operations {
                      *       "data": {
                      *         "items": [
                      *           {
-                     *             "id": "1",
-                     *             "hostname": "gpu-node-01",
+                     *             "id": "gpu-mock-001",
                      *             "resourceLevel": "H100",
                      *             "status": "ONLINE",
                      *             "lastReportedAt": "2026-05-18T08:00:00Z",

@@ -42,7 +42,7 @@ const purposeLen = computed(() => purpose.value.length)
 const purposeOverLimit = computed(() => purposeLen.value > MAX_PURPOSE_LEN)
 
 const sortedServers = computed(() =>
-  [...boardStore.items].sort((a, b) => a.hostname.localeCompare(b.hostname)),
+  [...boardStore.items].sort((a, b) => a.id.localeCompare(b.id)),
 )
 
 const serversLoading = computed(
@@ -185,7 +185,7 @@ async function onSubmit() {
             {{ sortedServers.length === 0 ? '暂无可选节点（请确认看板有上报数据）' : '请选择…' }}
           </option>
           <option v-for="s in sortedServers" :key="s.id" :value="s.id">
-            {{ s.id }} — {{ s.hostname }} · {{ s.resourceLevel }} · {{ s.status }}
+            {{ s.id }} · {{ s.resourceLevel }} · {{ s.status }}
           </option>
         </select>
         <p v-if="boardStore.errorMessage" class="mt-1 text-xs text-amber-700">

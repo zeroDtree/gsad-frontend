@@ -5,7 +5,6 @@ import type { ServerVO } from '@/types/apiEnvelope'
 
 const baseServer: ServerVO = {
   id: 'gpu-mock-001',
-  hostname: 'gpu-001.internal',
   resourceLevel: 'H100',
   status: 'ONLINE',
   lastReportedAt: '2026-04-21T14:28:10Z',
@@ -18,7 +17,6 @@ describe('normalizePublicServerItem', () => {
   it('uses explicit string id when present', () => {
     const item = normalizePublicServerItem({ ...baseServer, id: 'gpu-cn-bj-001' })
     expect(item?.id).toBe('gpu-cn-bj-001')
-    expect(item?.hostname).toBe('gpu-001.internal')
   })
 
   it('coerces numeric id to string', () => {
@@ -37,7 +35,7 @@ describe('normalizePublicServerItem', () => {
     ).toBeNull()
   })
 
-  it('returns null when hostname is empty', () => {
-    expect(normalizePublicServerItem({ ...baseServer, hostname: '  ' })).toBeNull()
+  it('returns null when id is empty', () => {
+    expect(normalizePublicServerItem({ ...baseServer, id: '  ' })).toBeNull()
   })
 })

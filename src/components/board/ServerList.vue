@@ -20,7 +20,7 @@ const COL_COUNT = 8
       <thead>
         <tr class="border-b border-slate-200 bg-zinc-50/90 text-xs font-medium text-slate-500">
           <th class="w-12 px-3 py-2.5">状态</th>
-          <th class="min-w-[10rem] px-3 py-2.5">主机名</th>
+          <th class="min-w-[10rem] px-3 py-2.5">服务器 ID</th>
           <th class="px-3 py-2.5">资源等级</th>
           <th class="whitespace-nowrap px-3 py-2.5">GPU 数</th>
           <th class="whitespace-nowrap px-3 py-2.5">平均利用率</th>
@@ -55,9 +55,9 @@ const COL_COUNT = 8
             <div class="flex min-w-0 flex-col gap-1">
               <span
                 class="truncate font-mono text-sm font-semibold text-slate-900"
-                :title="server.hostname"
+                :title="server.id"
               >
-                {{ server.hostname }}
+                {{ server.id }}
               </span>
               <span
                 v-if="isReportStale(server.lastReportedAt)"
