@@ -42,6 +42,17 @@ const canRevoke = computed(() => {
   return status === 'APPROVED' || status === 'ACTIVE' || status === 'FAILED_REVOKE'
 })
 
+const revokeHint = computed(() => {
+  const status = props.application?.audit_status
+  if (status === 'APPROVED') {
+    return '仅停止开通流程，服务器上尚未创建账号。'
+  }
+  if (status === 'ACTIVE' || status === 'FAILED_REVOKE') {
+    return '撤销将删除该服务器上您的 Linux 账号及其全部数据，且不可恢复。'
+  }
+  return null
+})
+
 watch(
   () => props.application?.id,
   () => {
@@ -65,8 +76,8 @@ async function onRevoke() {
 
   const message =
     app.audit_status === 'APPROVED'
-      ? '确定取消该申请？开通流程将停止。'
-      : '确定撤销访问？系统将回收服务器上的账号。'
+      ? '确定取消该申请？开通流程将停止，服务器上尚未创建账号。'
+      : '确定撤销访问？将删除该服务器上您的 Linux 账号及其全部数据，且不可恢复。'
   if (!window.confirm(message)) return
 
   revoking.value = true
@@ -256,6 +267,15 @@ function handleBackdrop(e: MouseEvent) {
               v-if="canRevoke || application.audit_status === 'REVOKING'"
               class="border-t border-slate-100 px-6 py-4"
             >
+              <p
+                v-if="canRevoke && revokeHint"
+                class="mb-2 text-xs leading-relaxed"
+                :class="
+                  application.audit_status === 'APPROVED' ? 'text-slate-500' : 'text-red-700/90'
+                "
+              >
+                {{ revokeHint }}
+              </p>
               <button
                 v-if="canRevoke"
                 type="button"
