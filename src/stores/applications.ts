@@ -3,7 +3,11 @@ import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 
 import { getApiMessage } from '@/api/errors'
-import { createApplication as apiCreate, getMyApplications } from '@/api/applications'
+import {
+  createApplication as apiCreate,
+  getMyApplications,
+  revokeApplication as apiRevoke,
+} from '@/api/applications'
 import type { ApplicationItem, AuditStatus, CreateApplicationPayload } from '@/types/application'
 
 const DEFAULT_PAGE_SIZE = 20
@@ -87,6 +91,12 @@ export const useApplicationsStore = defineStore('applications', () => {
     return created.id
   }
 
+  async function revokeApplication(id: string): Promise<ApplicationItem> {
+    const updated = await apiRevoke(id)
+    await fetchMine({ silent: true })
+    return updated
+  }
+
   function setHighlight(id: string | null) {
     highlightId.value = id
   }
@@ -109,6 +119,7 @@ export const useApplicationsStore = defineStore('applications', () => {
     fetchMine,
     setPage,
     createApplication,
+    revokeApplication,
     setHighlight,
   }
 })

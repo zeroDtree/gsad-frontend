@@ -159,10 +159,7 @@
             "application/json": {
               "schema": { "$ref": "#/components/schemas/CreateApplicationRequest" },
               "example": {
-                "serverId": "gpu-mock-001",
-                "purpose": "大模型预训练",
-                "requestedDays": 7,
-                "requestedStartAt": "2026-05-19T00:00:00Z"
+                "serverId": "gpu-mock-001"
               }
             }
           }
@@ -180,12 +177,9 @@
                     "id": "app-mock001",
                     "serverId": "gpu-mock-001",
                     "resourceLevel": "H100",
-                    "purpose": "联调",
-                    "requestedDays": 7,
-                    "requestedStartAt": "2026-05-19T00:00:00Z",
-                    "expireAt": "2026-05-26T00:00:00Z",
                     "auditStatus": "APPROVED",
                     "comment": null,
+                    "credentialsReady": false,
                     "createdAt": "2026-05-18T08:00:00Z",
                     "updatedAt": "2026-05-18T08:00:00Z"
                   }
@@ -198,6 +192,49 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "502": { "$ref": "#/components/responses/BadGateway" }
+        }
+      }
+    },
+    "/api/applications/{id}": {
+      "delete": {
+        "tags": ["Applications"],
+        "operationId": "revokeApplication",
+        "summary": "Revoke or cancel my application",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Application revoked or cancelled",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApplicationResponseEnvelope" },
+                "example": {
+                  "code": "",
+                  "message": "ok",
+                  "data": {
+                    "id": "app-mock001",
+                    "serverId": "gpu-mock-001",
+                    "resourceLevel": "H100",
+                    "auditStatus": "REVOKING",
+                    "comment": null,
+                    "credentialsReady": false,
+                    "createdAt": "2026-05-18T08:00:00Z",
+                    "updatedAt": "2026-05-18T09:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
         }
       }
     },
@@ -245,15 +282,12 @@
                         "id": "app-mock001",
                         "serverId": "1",
                         "resourceLevel": "H100",
-                        "purpose": "联调",
-                        "requestedDays": 7,
-                        "requestedStartAt": "2026-05-19T00:00:00Z",
-                        "expireAt": "2026-05-26T00:00:00Z",
                         "auditStatus": "ACTIVE",
                         "comment": null,
                         "serverIp": "10.0.0.101",
                         "sshUsername": "ubuntu",
                         "initialPassword": "ApifoxMock-Demo",
+                        "credentialsReady": true,
                         "createdAt": "2026-05-18T08:00:00Z",
                         "updatedAt": "2026-05-18T08:00:00Z"
                       }
@@ -296,7 +330,15 @@
       },
       "AuditStatus": {
         "type": "string",
-        "enum": ["APPROVED", "ACTIVE", "EXPIRED", "FAILED_GRANT", "FAILED_REVOKE"]
+        "enum": [
+          "APPROVED",
+          "ACTIVE",
+          "REVOKING",
+          "REVOKED",
+          "CANCELLED",
+          "FAILED_GRANT",
+          "FAILED_REVOKE"
+        ]
       },
       "ServerStatus": {
         "type": "string",
@@ -359,16 +401,13 @@
       },
       "CreateApplicationRequest": {
         "type": "object",
-        "required": ["serverId", "purpose", "requestedDays", "requestedStartAt"],
+        "required": ["serverId"],
         "description": "Submit application for a specific GPU server (Jackson camelCase).",
         "properties": {
           "serverId": {
             "type": "string",
             "description": "Target server id from GET /api/servers"
           },
-          "purpose": { "type": "string", "maxLength": 500 },
-          "requestedDays": { "type": "integer", "minimum": 1 },
-          "requestedStartAt": { "type": "string", "format": "date-time" },
           "sshPassword": {
             "type": "string",
             "minLength": 8,
@@ -384,15 +423,12 @@
           "id": { "type": "string" },
           "serverId": { "type": "string" },
           "resourceLevel": { "type": "string" },
-          "purpose": { "type": "string" },
-          "requestedDays": { "type": "integer" },
-          "requestedStartAt": { "type": "string", "format": "date-time" },
-          "expireAt": { "type": "string", "format": "date-time", "nullable": true },
           "auditStatus": { "$ref": "#/components/schemas/AuditStatus" },
           "comment": { "type": "string", "nullable": true },
           "serverIp": { "type": "string", "description": "Shown in UI when ACTIVE" },
           "sshUsername": { "type": "string" },
           "initialPassword": { "type": "string" },
+          "credentialsReady": { "type": "boolean" },
           "createdAt": { "type": "string", "format": "date-time" },
           "updatedAt": { "type": "string", "format": "date-time" }
         }

@@ -18,19 +18,6 @@ function readStr(raw: Record<string, unknown>, key: string): string {
   return typeof v === 'string' ? v : ''
 }
 
-function readNum(raw: Record<string, unknown>, key: string): number {
-  const v = raw[key]
-  if (typeof v === 'number' && Number.isFinite(v)) return v
-  const n = Number(v)
-  return Number.isFinite(n) ? n : 0
-}
-
-function readNullableStr(raw: Record<string, unknown>, key: string): string | null | undefined {
-  if (raw[key] === null) return null
-  const s = readStr(raw, key)
-  return s === '' ? undefined : s
-}
-
 function readServerId(raw: Record<string, unknown>): string {
   const v = raw.serverId
   if (typeof v === 'number' && Number.isFinite(v)) return String(Math.trunc(v))
@@ -60,7 +47,9 @@ function enrichApifoxMockApplication(item: ApplicationItem): ApplicationItem {
 const VALID_AUDIT_STATUSES = new Set<AuditStatus>([
   'APPROVED',
   'ACTIVE',
-  'EXPIRED',
+  'REVOKING',
+  'REVOKED',
+  'CANCELLED',
   'FAILED_GRANT',
   'FAILED_REVOKE',
 ])
@@ -80,13 +69,6 @@ export function toApplicationItem(vo: ApplicationVO): ApplicationItem | null {
     id: String(raw.id ?? ''),
     user_email: readStr(raw, 'userEmail') || undefined,
     server_id: readServerId(raw),
-    purpose: ((): string | undefined => {
-      const p = readStr(raw, 'purpose')
-      return p === '' ? undefined : p
-    })(),
-    requested_days: readNum(raw, 'requestedDays'),
-    requested_start_at: readStr(raw, 'requestedStartAt'),
-    expire_at: readNullableStr(raw, 'expireAt'),
     audit_status,
     comment: ((): string | null | undefined => {
       if (raw.comment === null) return null
@@ -106,9 +88,6 @@ export function toCreateApplicationWireBody(
 ): CreateApplicationRequest {
   const body: CreateApplicationRequest = {
     serverId: payload.server_id,
-    purpose: payload.purpose.trim(),
-    requestedDays: payload.requested_days,
-    requestedStartAt: payload.requested_start_at,
   }
   const sshPassword = payload.ssh_password?.trim()
   if (sshPassword) body.sshPassword = sshPassword
@@ -151,6 +130,14 @@ export async function createApplication(
       headers: { 'Idempotency-Key': idempotencyKey },
     },
   )
+  return normalizeApplication(data)
+}
+
+/**
+ * DELETE /api/applications/{id} — revoke or cancel my application.
+ */
+export async function revokeApplication(id: string): Promise<ApplicationItem> {
+  const { data } = await http.delete<ApplicationResponseEnvelope>(`/api/applications/${id}`)
   return normalizeApplication(data)
 }
 

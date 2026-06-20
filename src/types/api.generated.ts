@@ -72,6 +72,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/applications/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke or cancel my application */
+        delete: operations["revokeApplication"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/applications/mine": {
         parameters: {
             query?: never;
@@ -96,7 +113,7 @@ export interface components {
         /** @enum {string} */
         ErrorCode: "INVALID_ARGUMENT" | "UNAUTHORIZED" | "FORBIDDEN" | "NOT_FOUND" | "STATE_CONFLICT" | "RATE_LIMITED" | "UPSTREAM_NETBIRD_ERROR";
         /** @enum {string} */
-        AuditStatus: "APPROVED" | "ACTIVE" | "EXPIRED" | "FAILED_GRANT" | "FAILED_REVOKE";
+        AuditStatus: "APPROVED" | "ACTIVE" | "REVOKING" | "REVOKED" | "CANCELLED" | "FAILED_GRANT" | "FAILED_REVOKE";
         /** @enum {string} */
         ServerStatus: "ONLINE" | "OFFLINE" | "MAINTENANCE";
         /**
@@ -142,10 +159,6 @@ export interface components {
         CreateApplicationRequest: {
             /** @description Target server id from GET /api/servers */
             serverId: string;
-            purpose: string;
-            requestedDays: number;
-            /** Format: date-time */
-            requestedStartAt: string;
             /** @description Optional SSH password for the granted account */
             sshPassword?: string;
         };
@@ -154,18 +167,13 @@ export interface components {
             id?: string;
             serverId?: string;
             resourceLevel?: string;
-            purpose?: string;
-            requestedDays?: number;
-            /** Format: date-time */
-            requestedStartAt?: string;
-            /** Format: date-time */
-            expireAt?: string | null;
             auditStatus?: components["schemas"]["AuditStatus"];
             comment?: string | null;
             /** @description Shown in UI when ACTIVE */
             serverIp?: string;
             sshUsername?: string;
             initialPassword?: string;
+            credentialsReady?: boolean;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */
@@ -498,10 +506,7 @@ export interface operations {
             content: {
                 /**
                  * @example {
-                 *       "serverId": "gpu-mock-001",
-                 *       "purpose": "大模型预训练",
-                 *       "requestedDays": 7,
-                 *       "requestedStartAt": "2026-05-19T00:00:00Z"
+                 *       "serverId": "gpu-mock-001"
                  *     }
                  */
                 "application/json": components["schemas"]["CreateApplicationRequest"];
@@ -522,12 +527,9 @@ export interface operations {
                      *         "id": "app-mock001",
                      *         "serverId": "gpu-mock-001",
                      *         "resourceLevel": "H100",
-                     *         "purpose": "联调",
-                     *         "requestedDays": 7,
-                     *         "requestedStartAt": "2026-05-19T00:00:00Z",
-                     *         "expireAt": "2026-05-26T00:00:00Z",
                      *         "auditStatus": "APPROVED",
                      *         "comment": null,
+                     *         "credentialsReady": false,
                      *         "createdAt": "2026-05-18T08:00:00Z",
                      *         "updatedAt": "2026-05-18T08:00:00Z"
                      *       }
@@ -541,6 +543,47 @@ export interface operations {
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             502: components["responses"]["BadGateway"];
+        };
+    };
+    revokeApplication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Application revoked or cancelled */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "",
+                     *       "message": "ok",
+                     *       "data": {
+                     *         "id": "app-mock001",
+                     *         "serverId": "gpu-mock-001",
+                     *         "resourceLevel": "H100",
+                     *         "auditStatus": "REVOKING",
+                     *         "comment": null,
+                     *         "credentialsReady": false,
+                     *         "createdAt": "2026-05-18T08:00:00Z",
+                     *         "updatedAt": "2026-05-18T09:00:00Z"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ApplicationResponseEnvelope"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
         };
     };
     listMyApplications: {
@@ -575,15 +618,12 @@ export interface operations {
                      *             "id": "app-mock001",
                      *             "serverId": "1",
                      *             "resourceLevel": "H100",
-                     *             "purpose": "联调",
-                     *             "requestedDays": 7,
-                     *             "requestedStartAt": "2026-05-19T00:00:00Z",
-                     *             "expireAt": "2026-05-26T00:00:00Z",
                      *             "auditStatus": "ACTIVE",
                      *             "comment": null,
                      *             "serverIp": "10.0.0.101",
                      *             "sshUsername": "ubuntu",
                      *             "initialPassword": "ApifoxMock-Demo",
+                     *             "credentialsReady": true,
                      *             "createdAt": "2026-05-18T08:00:00Z",
                      *             "updatedAt": "2026-05-18T08:00:00Z"
                      *           }

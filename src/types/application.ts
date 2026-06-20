@@ -1,5 +1,12 @@
 /** Application lifecycle after submit (no manual approval) */
-export type AuditStatus = 'APPROVED' | 'ACTIVE' | 'EXPIRED' | 'FAILED_GRANT' | 'FAILED_REVOKE'
+export type AuditStatus =
+  | 'APPROVED'
+  | 'ACTIVE'
+  | 'REVOKING'
+  | 'REVOKED'
+  | 'CANCELLED'
+  | 'FAILED_GRANT'
+  | 'FAILED_REVOKE'
 
 export interface ApplicationItem {
   id: string
@@ -7,11 +14,6 @@ export interface ApplicationItem {
   user_email?: string
   /** Target GPU server id (binds application to one machine). */
   server_id: string
-  purpose?: string
-  requested_days: number
-  /** UTC ISO 8601 */
-  requested_start_at: string
-  expire_at?: string | null
   audit_status: AuditStatus
   /** Optional system or operator note */
   comment?: string | null
@@ -26,11 +28,7 @@ export interface ApplicationItem {
 /** UI/form payload for POST /api/applications (mapped to CreateApplicationRequest on the wire). */
 export interface CreateApplicationPayload {
   server_id: string
-  purpose: string
   ssh_password?: string
-  requested_days: number
-  /** UTC ISO 8601 */
-  requested_start_at: string
 }
 
 export interface ApplicationListParams {

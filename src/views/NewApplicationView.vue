@@ -6,7 +6,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { useUiStore } from '@/stores/ui'
 import { useApplicationsStore } from '@/stores/applications'
 import { useBoardStore } from '@/stores/board'
-import { dayjs } from '@/lib/dayjs'
 
 const router = useRouter()
 const route = useRoute()
@@ -14,32 +13,18 @@ const ui = useUiStore()
 const appStore = useApplicationsStore()
 const boardStore = useBoardStore()
 
-// ─── Form state ────────────────────────────────────────────────────────────
 const serverId = ref('')
-const purpose = ref('')
 const sshPassword = ref('')
 const sshPasswordVisible = ref(false)
-const requestedDays = ref<number | ''>('')
-const requestedStartAt = ref('') // datetime-local string (local tz)
-
 const submitting = ref(false)
 
 const MIN_SSH_PASSWORD_LEN = 8
 const MAX_SSH_PASSWORD_LEN = 128
 
-// ─── Field-level errors ─────────────────────────────────────────────────────
 const errors = ref({
   serverId: '',
-  purpose: '',
   sshPassword: '',
-  requestedDays: '',
 })
-
-const MAX_PURPOSE_LEN = 500
-const MAX_DAYS = 365
-
-const purposeLen = computed(() => purpose.value.length)
-const purposeOverLimit = computed(() => purposeLen.value > MAX_PURPOSE_LEN)
 
 const sortedServers = computed(() =>
   [...boardStore.items].sort((a, b) => a.id.localeCompare(b.id)),
@@ -48,24 +33,6 @@ const sortedServers = computed(() =>
 const serversLoading = computed(
   () => boardStore.loading && boardStore.items.length === 0 && !boardStore.errorMessage,
 )
-
-/**
- * Resolve effective start time:
- * - If empty or in the past → use current time (immediate application)
- * - Otherwise use the specified local datetime converted to UTC
- */
-function resolveStartUtc(): string {
-  if (!requestedStartAt.value) return dayjs.utc().toISOString()
-  const selected = dayjs(requestedStartAt.value).utc()
-  if (selected.isBefore(dayjs.utc())) return dayjs.utc().toISOString()
-  return selected.toISOString()
-}
-
-/** Whether the picker value would be treated as "now" */
-const effectivelyNow = computed(() => {
-  if (!requestedStartAt.value) return true
-  return dayjs(requestedStartAt.value).utc().isBefore(dayjs.utc())
-})
 
 function applyServerIdFromRoute() {
   const q = route.query.serverId
@@ -85,19 +52,10 @@ watch([() => route.query.serverId, sortedServers], applyServerIdFromRoute)
 
 function validate(): boolean {
   let ok = true
-  errors.value = { serverId: '', purpose: '', sshPassword: '', requestedDays: '' }
+  errors.value = { serverId: '', sshPassword: '' }
 
   if (!serverId.value) {
     errors.value.serverId = '请选择目标服务器'
-    ok = false
-  }
-
-  const purposeTrimmed = purpose.value.trim()
-  if (!purposeTrimmed) {
-    errors.value.purpose = '请填写申请用途'
-    ok = false
-  } else if (purposeOverLimit.value) {
-    errors.value.purpose = `不得超过 ${MAX_PURPOSE_LEN} 字符`
     ok = false
   }
 
@@ -112,15 +70,6 @@ function validate(): boolean {
     }
   }
 
-  const days = Number(requestedDays.value)
-  if (!requestedDays.value || !Number.isInteger(days) || days <= 0) {
-    errors.value.requestedDays = '申请天数必须为正整数'
-    ok = false
-  } else if (days > MAX_DAYS) {
-    errors.value.requestedDays = `申请天数不得超过 ${MAX_DAYS} 天`
-    ok = false
-  }
-
   return ok
 }
 
@@ -130,14 +79,10 @@ async function onSubmit() {
 
   submitting.value = true
   try {
-    const purposeTrimmed = purpose.value.trim()
     const sshPasswordTrimmed = sshPassword.value.trim()
     const newId = await appStore.createApplication({
       server_id: serverId.value,
-      purpose: purposeTrimmed,
       ...(sshPasswordTrimmed ? { ssh_password: sshPasswordTrimmed } : {}),
-      requested_days: Number(requestedDays.value),
-      requested_start_at: resolveStartUtc(),
     })
 
     ui.pushToast({ type: 'success', message: '申请已提交' })
@@ -159,7 +104,7 @@ async function onSubmit() {
       </p>
       <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">新建申请</h1>
       <p class="mt-2 max-w-lg text-sm leading-relaxed text-slate-500">
-        选择具体目标服务器后提交，系统将按机器发起访问授权。提交后可在「我的申请」页追踪进度。
+        选择目标服务器后提交，系统将发起访问授权。访问生效后可在「我的申请」中随时撤销。
       </p>
     </header>
 
@@ -167,7 +112,6 @@ async function onSubmit() {
       class="space-y-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
       @submit.prevent="onSubmit"
     >
-      <!-- Target server -->
       <div>
         <label class="mb-1.5 block text-sm font-medium text-slate-700" for="f-server-id">
           目标服务器 <span class="text-red-500">*</span>
@@ -196,7 +140,6 @@ async function onSubmit() {
         </p>
       </div>
 
-      <!-- SSH password -->
       <div>
         <label class="mb-1.5 block text-sm font-medium text-slate-700" for="f-ssh-password">
           SSH 登录密码（可选）
@@ -227,69 +170,6 @@ async function onSubmit() {
         </p>
       </div>
 
-      <!-- Purpose -->
-      <div>
-        <label class="mb-1.5 block text-sm font-medium text-slate-700" for="f-purpose">
-          申请用途 <span class="text-red-500">*</span>
-        </label>
-        <textarea
-          id="f-purpose"
-          v-model="purpose"
-          rows="4"
-          class="w-full resize-none rounded-md border px-3 py-2 text-sm text-slate-900 outline-none ring-slate-300 transition focus:ring-2"
-          :class="errors.purpose ? 'border-red-300 bg-red-50' : 'border-slate-200 bg-white'"
-          placeholder="请说明具体任务、模型规模和预期资源消耗…"
-        />
-        <div class="mt-1 flex items-center justify-between">
-          <p v-if="errors.purpose" class="text-xs text-red-600">{{ errors.purpose }}</p>
-          <p v-else class="text-xs text-slate-400" />
-          <p class="shrink-0 text-xs" :class="purposeOverLimit ? 'text-red-600' : 'text-slate-400'">
-            {{ purposeLen }} / {{ MAX_PURPOSE_LEN }}
-          </p>
-        </div>
-      </div>
-
-      <!-- Requested days -->
-      <div>
-        <label class="mb-1.5 block text-sm font-medium text-slate-700" for="f-days">
-          申请天数 <span class="text-red-500">*</span>
-        </label>
-        <input
-          id="f-days"
-          v-model.number="requestedDays"
-          type="number"
-          min="1"
-          step="1"
-          class="h-10 w-40 rounded-md border px-3 text-sm text-slate-900 outline-none ring-slate-300 transition focus:ring-2"
-          :class="errors.requestedDays ? 'border-red-300 bg-red-50' : 'border-slate-200 bg-white'"
-          placeholder="如：7"
-        />
-        <p v-if="errors.requestedDays" class="mt-1 text-xs text-red-600">
-          {{ errors.requestedDays }}
-        </p>
-      </div>
-
-      <!-- Start time -->
-      <div>
-        <label class="mb-1.5 block text-sm font-medium text-slate-700" for="f-start">
-          期望开始时间（可选）
-        </label>
-        <input
-          id="f-start"
-          v-model="requestedStartAt"
-          type="datetime-local"
-          class="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none ring-slate-300 transition focus:ring-2"
-        />
-        <p class="mt-1 text-xs text-slate-400">
-          <template v-if="effectivelyNow">
-            未指定或时间已过，将视为<span class="font-medium text-slate-600">立即申请</span
-            >；提交时自动转换为 UTC。
-          </template>
-          <template v-else> 提交时自动转换为 UTC。 </template>
-        </p>
-      </div>
-
-      <!-- Submit -->
       <div class="flex items-center justify-end gap-3 border-t border-slate-100 pt-4">
         <button
           type="button"

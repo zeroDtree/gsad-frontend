@@ -10,7 +10,9 @@ type StatusMeta = {
 export const AUDIT_STATUS_MAP: Record<AuditStatus, StatusMeta> = {
   APPROVED: { label: '授权处理中', color: 'cyan', icon: 'Zap' },
   ACTIVE: { label: '已生效', color: 'success', icon: 'CheckCircle' },
-  EXPIRED: { label: '已到期', color: 'gray', icon: 'Clock' },
+  REVOKING: { label: '回收中', color: 'blue', icon: 'Clock' },
+  REVOKED: { label: '已撤销', color: 'gray', icon: 'CheckCircle' },
+  CANCELLED: { label: '已取消', color: 'gray', icon: 'XCircle' },
   FAILED_GRANT: { label: '授权失败', color: 'error', icon: 'XCircle' },
   FAILED_REVOKE: { label: '回收失败', color: 'warning', icon: 'AlertTriangle' },
 }

@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { useIntervalFn } from '@vueuse/core'
 import { Copy, Eye, EyeOff, X } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 
 import AuditStatusBadge from '@/components/application/AuditStatusBadge.vue'
 import { formatLocalDateTime, formatRelativeFromUtc } from '@/lib/dayjs'
-import { dayjs } from '@/lib/dayjs'
+import { useApplicationsStore } from '@/stores/applications'
 import { useUiStore } from '@/stores/ui'
 import type { ApplicationItem } from '@/types/application'
 
@@ -15,11 +14,15 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   close: []
+  updated: [ApplicationItem]
 }>()
 
-const isOpen = computed(() => props.application !== null)
+const appStore = useApplicationsStore()
 const ui = useUiStore()
+
+const isOpen = computed(() => props.application !== null)
 const passwordVisible = ref(false)
+const revoking = ref(false)
 
 const showAccessInfo = computed(() => {
   const app = props.application
@@ -27,10 +30,23 @@ const showAccessInfo = computed(() => {
   return !!(app.server_ip || app.ssh_username || app.initial_password)
 })
 
+const revokeLabel = computed(() => {
+  const status = props.application?.audit_status
+  if (status === 'APPROVED') return '取消申请'
+  if (status === 'ACTIVE' || status === 'FAILED_REVOKE') return '撤销访问'
+  return ''
+})
+
+const canRevoke = computed(() => {
+  const status = props.application?.audit_status
+  return status === 'APPROVED' || status === 'ACTIVE' || status === 'FAILED_REVOKE'
+})
+
 watch(
   () => props.application?.id,
   () => {
     passwordVisible.value = false
+    revoking.value = false
   },
 )
 
@@ -43,42 +59,30 @@ async function copyValue(label: string, value: string) {
   }
 }
 
-// Countdown state for ACTIVE applications
-const countdownLabel = ref('')
-
-function computeCountdown() {
+async function onRevoke() {
   const app = props.application
-  if (!app || app.audit_status !== 'ACTIVE' || !app.expire_at) {
-    countdownLabel.value = ''
-    return
-  }
-  const diff = dayjs.utc(app.expire_at).diff(dayjs(), 'minute')
-  if (diff <= 0) {
-    countdownLabel.value = '已到期'
-  } else if (diff < 60) {
-    countdownLabel.value = `${diff} 分钟后到期`
-  } else {
-    const hours = Math.floor(diff / 60)
-    const mins = diff % 60
-    countdownLabel.value = `${hours} 小时 ${mins} 分钟后到期`
+  if (!app || !canRevoke.value || revoking.value) return
+
+  const message =
+    app.audit_status === 'APPROVED'
+      ? '确定取消该申请？开通流程将停止。'
+      : '确定撤销访问？系统将回收服务器上的账号。'
+  if (!window.confirm(message)) return
+
+  revoking.value = true
+  try {
+    const updated = await appStore.revokeApplication(app.id)
+    ui.pushToast({
+      type: 'success',
+      message: updated.audit_status === 'CANCELLED' ? '申请已取消' : '撤销已提交',
+    })
+    emit('updated', updated)
+  } catch {
+    // http interceptor shows error toast
+  } finally {
+    revoking.value = false
   }
 }
-
-watch(() => props.application, computeCountdown, { immediate: true })
-
-const { pause, resume } = useIntervalFn(computeCountdown, 60_000, { immediate: false })
-
-watch(
-  () => props.application?.audit_status,
-  (status) => {
-    if (status === 'ACTIVE') {
-      resume()
-    } else {
-      pause()
-    }
-  },
-  { immediate: true },
-)
 
 function handleBackdrop(e: MouseEvent) {
   if (e.target === e.currentTarget) emit('close')
@@ -95,16 +99,13 @@ function handleBackdrop(e: MouseEvent) {
         role="dialog"
         @click="handleBackdrop"
       >
-        <!-- Backdrop -->
         <div class="absolute inset-0 bg-black/20 backdrop-blur-[2px]" />
 
-        <!-- Panel -->
         <Transition name="drawer-slide">
           <div
             v-if="isOpen"
             class="relative z-10 flex h-full w-full max-w-md flex-col overflow-y-auto bg-white shadow-xl ring-1 ring-slate-200"
           >
-            <!-- Header -->
             <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
               <div>
                 <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
@@ -124,21 +125,15 @@ function handleBackdrop(e: MouseEvent) {
               </button>
             </div>
 
-            <!-- Body -->
             <div class="flex-1 space-y-5 px-6 py-5">
-              <!-- Status -->
               <div>
                 <p class="mb-1.5 text-xs font-medium text-slate-500">状态</p>
                 <AuditStatusBadge :status="application.audit_status" />
-                <p
-                  v-if="application.audit_status === 'ACTIVE' && countdownLabel"
-                  class="mt-1.5 text-xs text-emerald-600"
-                >
-                  {{ countdownLabel }}
+                <p v-if="application.audit_status === 'REVOKING'" class="mt-1.5 text-xs text-blue-600">
+                  正在等待服务器回收账号…
                 </p>
               </div>
 
-              <!-- SSH access (ACTIVE + credentials from API) -->
               <div
                 v-if="showAccessInfo"
                 class="rounded-lg border border-emerald-200 bg-emerald-50/60 p-4"
@@ -208,45 +203,13 @@ function handleBackdrop(e: MouseEvent) {
                 </dl>
               </div>
 
-              <!-- Server + resource snapshot -->
-              <div class="grid grid-cols-2 gap-4">
-                <div class="col-span-2">
-                  <p class="mb-1 text-xs font-medium text-slate-500">服务器 ID</p>
-                  <p class="break-all font-mono text-sm font-medium text-slate-900">
-                    {{ application.server_id || '—' }}
-                  </p>
-                </div>
-                <div>
-                  <p class="mb-1 text-xs font-medium text-slate-500">申请时长</p>
-                  <p class="text-sm font-medium text-slate-800">
-                    {{ application.requested_days }} 天
-                  </p>
-                </div>
-                <div>
-                  <p class="mb-1 text-xs font-medium text-slate-500">期望开始时间</p>
-                  <p class="text-sm text-slate-800">
-                    {{ formatLocalDateTime(application.requested_start_at) }}
-                  </p>
-                </div>
-                <div v-if="application.expire_at">
-                  <p class="mb-1 text-xs font-medium text-slate-500">到期时间</p>
-                  <p class="text-sm text-slate-800">
-                    {{ formatLocalDateTime(application.expire_at) }}
-                  </p>
-                </div>
-              </div>
-
-              <!-- Purpose -->
-              <div v-if="application.purpose?.trim()">
-                <p class="mb-1.5 text-xs font-medium text-slate-500">申请用途</p>
-                <p
-                  class="rounded-lg border border-slate-100 bg-zinc-50 p-3 text-sm leading-relaxed text-slate-700"
-                >
-                  {{ application.purpose }}
+              <div>
+                <p class="mb-1 text-xs font-medium text-slate-500">服务器 ID</p>
+                <p class="break-all font-mono text-sm font-medium text-slate-900">
+                  {{ application.server_id || '—' }}
                 </p>
               </div>
 
-              <!-- Optional note (e.g. system message) -->
               <div
                 v-if="
                   application.comment &&
@@ -262,7 +225,6 @@ function handleBackdrop(e: MouseEvent) {
                 </p>
               </div>
 
-              <!-- Failed reason -->
               <div
                 v-if="
                   application.audit_status === 'FAILED_GRANT' ||
@@ -279,7 +241,6 @@ function handleBackdrop(e: MouseEvent) {
                 <p v-else class="text-sm text-slate-500">暂无详细说明，请稍后重试或联系运维。</p>
               </div>
 
-              <!-- Timestamps -->
               <div class="border-t border-slate-100 pt-4">
                 <p class="mb-1 text-xs font-medium text-slate-500">最后更新</p>
                 <p class="text-xs text-slate-500">
@@ -289,6 +250,22 @@ function handleBackdrop(e: MouseEvent) {
                   >
                 </p>
               </div>
+            </div>
+
+            <div
+              v-if="canRevoke || application.audit_status === 'REVOKING'"
+              class="border-t border-slate-100 px-6 py-4"
+            >
+              <button
+                v-if="canRevoke"
+                type="button"
+                class="h-10 w-full rounded-md border border-red-200 bg-red-50 px-4 text-sm font-medium text-red-800 transition hover:bg-red-100 disabled:opacity-60"
+                :disabled="revoking"
+                @click="onRevoke"
+              >
+                {{ revoking ? '处理中…' : revokeLabel }}
+              </button>
+              <p v-else class="text-center text-sm text-slate-500">回收中…</p>
             </div>
           </div>
         </Transition>

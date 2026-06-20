@@ -8,7 +8,7 @@ import { useRoute } from 'vue-router'
 import ApplicationDetailDrawer from '@/components/application/ApplicationDetailDrawer.vue'
 import AuditStatusBadge from '@/components/application/AuditStatusBadge.vue'
 import { AUDIT_STATUS_MAP } from '@/constants/auditStatus'
-import { formatLocalDateTime, formatRelativeFromUtc } from '@/lib/dayjs'
+import { formatRelativeFromUtc } from '@/lib/dayjs'
 import { useApplicationsStore } from '@/stores/applications'
 import type { ApplicationItem, AuditStatus } from '@/types/application'
 
@@ -41,6 +41,12 @@ function openDrawer(app: ApplicationItem) {
 
 function closeDrawer() {
   selectedAppId.value = null
+}
+
+function onApplicationUpdated(app: ApplicationItem) {
+  if (selectedAppId.value === app.id) {
+    selectedAppId.value = app.id
+  }
 }
 
 function onRefresh() {
@@ -81,10 +87,12 @@ onUnmounted(() => pause())
 
 watch(() => route.query.highlight, applyHighlight)
 
-function truncate(s: string | undefined, n = 60) {
-  if (!s) return '—'
-  return s.length > n ? s.slice(0, n) + '…' : s
-}
+watch(items, () => {
+  if (!selectedAppId.value) return
+  if (!items.value.some((i) => i.id === selectedAppId.value)) {
+    selectedAppId.value = null
+  }
+})
 </script>
 
 <template>
@@ -174,9 +182,6 @@ function truncate(s: string | undefined, n = 60) {
             >
               <th class="whitespace-nowrap px-4 py-3 text-left">申请 ID</th>
               <th class="whitespace-nowrap px-4 py-3 text-left">服务器 ID</th>
-              <th class="hidden whitespace-nowrap px-4 py-3 text-left md:table-cell">用途摘要</th>
-              <th class="whitespace-nowrap px-4 py-3 text-left">天数</th>
-              <th class="hidden whitespace-nowrap px-4 py-3 text-left lg:table-cell">开始时间</th>
               <th class="whitespace-nowrap px-4 py-3 text-left">状态</th>
               <th class="hidden whitespace-nowrap px-4 py-3 text-left xl:table-cell">更新时间</th>
             </tr>
@@ -199,13 +204,6 @@ function truncate(s: string | undefined, n = 60) {
                 >
                   {{ app.server_id || '—' }}
                 </span>
-              </td>
-              <td class="hidden px-4 py-3 text-slate-600 md:table-cell">
-                {{ app.purpose ? truncate(app.purpose) : '—' }}
-              </td>
-              <td class="px-4 py-3 text-slate-800">{{ app.requested_days }} 天</td>
-              <td class="hidden px-4 py-3 text-slate-600 lg:table-cell">
-                {{ formatLocalDateTime(app.requested_start_at) }}
               </td>
               <td class="px-4 py-3">
                 <AuditStatusBadge :status="app.audit_status" />
@@ -248,6 +246,10 @@ function truncate(s: string | undefined, n = 60) {
       </div>
     </div>
 
-    <ApplicationDetailDrawer :application="selectedApp" @close="closeDrawer" />
+    <ApplicationDetailDrawer
+      :application="selectedApp"
+      @close="closeDrawer"
+      @updated="onApplicationUpdated"
+    />
   </div>
 </template>
