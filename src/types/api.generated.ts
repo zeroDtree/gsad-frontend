@@ -21,7 +21,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/auth/register": {
+    "/api/admin/users/import": {
         parameters: {
             query?: never;
             header?: never;
@@ -30,8 +30,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Register a new user */
-        post: operations["register"];
+        /** Import users from CSV (admin only) */
+        post: operations["importUsers"];
         delete?: never;
         options?: never;
         head?: never;
@@ -132,11 +132,27 @@ export interface components {
             /** Format: password */
             password: string;
         };
-        RegisterRequest: {
+        UserImportError: {
+            row: number;
+            reason: string;
+        };
+        UserImportPassword: {
             /** Format: email */
             email: string;
-            /** Format: password */
-            password: string;
+            initialPassword: string;
+        };
+        UserImportResponse: {
+            created: number;
+            skipped: number;
+            errors: components["schemas"]["UserImportError"][];
+            passwords: components["schemas"]["UserImportPassword"][];
+        };
+        UserImportResponseEnvelope: {
+            /** @example  */
+            code: string;
+            /** @example ok */
+            message: string;
+            data: components["schemas"]["UserImportResponse"];
         };
         AuthResponse: {
             /** @description JWT access token */
@@ -400,9 +416,10 @@ export interface operations {
             };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
         };
     };
-    register: {
+    importUsers: {
         parameters: {
             query?: never;
             header?: never;
@@ -411,32 +428,28 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RegisterRequest"];
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description CSV with columns: email,linux_username,display_name,student_id,cohort,initial_password,roles
+                     */
+                    file: string;
+                };
             };
         };
         responses: {
-            /** @description Registration successful */
-            201: {
+            /** @description Import result */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    /**
-                     * @example {
-                     *       "code": "",
-                     *       "message": "ok",
-                     *       "data": {
-                     *         "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImRlbW9AZXhhbXBsZS5jb20iLCJyb2xlcyI6W119.mock",
-                     *         "email": "demo@example.com",
-                     *         "roles": []
-                     *       }
-                     *     }
-                     */
-                    "application/json": components["schemas"]["AuthResponseEnvelope"];
+                    "application/json": components["schemas"]["UserImportResponseEnvelope"];
                 };
             };
             400: components["responses"]["BadRequest"];
-            409: components["responses"]["Conflict"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
         };
     };
     listServers: {

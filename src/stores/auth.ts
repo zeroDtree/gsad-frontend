@@ -2,12 +2,7 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
 import { http } from '@/api/http'
-import type {
-  AuthResponse,
-  AuthResponseEnvelope,
-  LoginRequest,
-  RegisterRequest,
-} from '@/types/apiEnvelope'
+import type { AuthResponse, AuthResponseEnvelope, LoginRequest } from '@/types/apiEnvelope'
 
 const TOKEN_KEY = 'GSAD_TOKEN'
 
@@ -92,6 +87,9 @@ export const useAuthStore = defineStore('auth', () => {
   /** Authenticated iff a token is present — email alone is not sufficient. */
   const isAuthenticated = computed(() => Boolean(token.value))
 
+  /** UI-only; backend enforces admin on /api/admin/**. */
+  const isAdmin = computed(() => roles.value.includes('admin'))
+
   function hydrate() {
     const storedToken = localStorage.getItem(TOKEN_KEY)
     if (!storedToken) return
@@ -122,13 +120,6 @@ export const useAuthStore = defineStore('auth', () => {
     persistSession(auth.email, auth.token, auth.roles)
   }
 
-  async function registerWithPassword(rawEmail: string, password: string) {
-    const body: RegisterRequest = { email: rawEmail.trim(), password }
-    const { data } = await http.post<AuthResponseEnvelope>('/api/auth/register', body)
-    const auth = toPersistableAuth(normalizeAuthResponse(data), rawEmail)
-    persistSession(auth.email, auth.token, auth.roles)
-  }
-
   function clearSession() {
     token.value = null
     email.value = null
@@ -143,9 +134,9 @@ export const useAuthStore = defineStore('auth', () => {
     roles,
     token,
     isAuthenticated,
+    isAdmin,
     hydrate,
     clearSession,
     loginWithPassword,
-    registerWithPassword,
   }
 })

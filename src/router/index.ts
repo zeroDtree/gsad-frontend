@@ -21,12 +21,6 @@ export const router = createRouter({
       meta: { authPage: true, guestOnly: true, nav: 'login' },
     },
     {
-      path: '/register',
-      name: 'register',
-      component: () => import('@/views/auth/RegisterView.vue'),
-      meta: { authPage: true, guestOnly: true },
-    },
-    {
       path: '/board',
       name: 'board',
       component: () => import('@/views/BoardView.vue'),
@@ -44,6 +38,12 @@ export const router = createRouter({
       component: () => import('@/views/MyApplicationsView.vue'),
       meta: { nav: 'mine', requiresAuth: true },
     },
+    {
+      path: '/admin/users/import',
+      name: 'admin-users-import',
+      component: () => import('@/views/admin/AdminUserImportView.vue'),
+      meta: { nav: 'admin-import', requiresAuth: true, requiresAdmin: true },
+    },
     { path: '/:pathMatch(.*)*', redirect: '/board' },
   ],
 })
@@ -53,6 +53,10 @@ router.beforeEach((to) => {
 
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
     return { path: '/login', query: { redirect: to.fullPath } }
+  }
+
+  if (to.meta.requiresAdmin && !auth.isAdmin) {
+    return { path: '/board' }
   }
 
   if (to.meta.guestOnly && auth.isAuthenticated) {

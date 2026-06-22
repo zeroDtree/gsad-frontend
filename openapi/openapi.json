@@ -16,7 +16,8 @@
     }
   ],
   "tags": [
-    { "name": "Authentication", "description": "User registration and login" },
+    { "name": "Authentication", "description": "User login" },
+    { "name": "Admin", "description": "Admin-only operations (JWT with admin role)" },
     { "name": "Servers", "description": "Public server board (no auth)" },
     { "name": "Applications", "description": "Resource access applications (JWT required)" }
   ],
@@ -53,43 +54,47 @@
             }
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
-          "401": { "$ref": "#/components/responses/Unauthorized" }
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
         }
       }
     },
-    "/api/auth/register": {
+    "/api/admin/users/import": {
       "post": {
-        "tags": ["Authentication"],
-        "operationId": "register",
-        "summary": "Register a new user",
+        "tags": ["Admin"],
+        "operationId": "importUsers",
+        "summary": "Import users from CSV (admin only)",
+        "security": [{ "bearerAuth": [] }],
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/RegisterRequest" }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Registration successful",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/AuthResponseEnvelope" },
-                "example": {
-                  "code": "",
-                  "message": "ok",
-                  "data": {
-                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImRlbW9AZXhhbXBsZS5jb20iLCJyb2xlcyI6W119.mock",
-                    "email": "demo@example.com",
-                    "roles": []
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "CSV with columns: email,linux_username,display_name,student_id,cohort,initial_password,roles"
                   }
                 }
               }
             }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Import result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UserImportResponseEnvelope" }
+              }
+            }
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
-          "409": { "$ref": "#/components/responses/Conflict" }
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
         }
       }
     },
@@ -312,7 +317,7 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT",
-        "description": "JWT from login/register; store as GSAD_TOKEN in the frontend."
+        "description": "JWT from login; store as GSAD_TOKEN in the frontend."
       }
     },
     "schemas": {
@@ -366,12 +371,45 @@
           "password": { "type": "string", "format": "password" }
         }
       },
-      "RegisterRequest": {
+      "UserImportError": {
         "type": "object",
-        "required": ["email", "password"],
+        "required": ["row", "reason"],
+        "properties": {
+          "row": { "type": "integer" },
+          "reason": { "type": "string" }
+        }
+      },
+      "UserImportPassword": {
+        "type": "object",
+        "required": ["email", "initialPassword"],
         "properties": {
           "email": { "type": "string", "format": "email" },
-          "password": { "type": "string", "format": "password", "minLength": 8 }
+          "initialPassword": { "type": "string" }
+        }
+      },
+      "UserImportResponse": {
+        "type": "object",
+        "required": ["created", "skipped", "errors", "passwords"],
+        "properties": {
+          "created": { "type": "integer" },
+          "skipped": { "type": "integer" },
+          "errors": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/UserImportError" }
+          },
+          "passwords": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/UserImportPassword" }
+          }
+        }
+      },
+      "UserImportResponseEnvelope": {
+        "type": "object",
+        "required": ["code", "message", "data"],
+        "properties": {
+          "code": { "type": "string", "example": "" },
+          "message": { "type": "string", "example": "ok" },
+          "data": { "$ref": "#/components/schemas/UserImportResponse" }
         }
       },
       "AuthResponse": {

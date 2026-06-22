@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import AuthCard from '@/components/auth/AuthCard.vue'
 import { safeInternalRedirect } from '@/lib/redirect'
@@ -73,13 +73,7 @@ async function onSubmit() {
     </AuthCard>
 
     <p class="mt-8 text-center text-sm text-slate-500">
-      还没有账号？
-      <RouterLink
-        to="/register"
-        class="font-medium text-slate-900 underline-offset-2 hover:underline"
-      >
-        注册
-      </RouterLink>
+      账号由管理员导入开通，如有问题请联系管理员。
     </p>
   </div>
 </template>
