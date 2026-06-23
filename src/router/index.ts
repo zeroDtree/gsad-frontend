@@ -39,6 +39,12 @@ export const router = createRouter({
       meta: { nav: 'mine', requiresAuth: true },
     },
     {
+      path: '/admin/users',
+      name: 'admin-users',
+      component: () => import('@/views/admin/AdminUserListView.vue'),
+      meta: { nav: 'admin-users', requiresAuth: true, requiresAdmin: true },
+    },
+    {
       path: '/admin/users/import',
       name: 'admin-users-import',
       component: () => import('@/views/admin/AdminUserImportView.vue'),

@@ -21,6 +21,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List users (paginated, admin only) */
+        get: operations["listAdminUsers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete user (admin only) */
+        delete: operations["deleteAdminUser"];
+        options?: never;
+        head?: never;
+        /** Update user (admin only) */
+        patch: operations["updateAdminUser"];
+        trace?: never;
+    };
+    "/api/admin/users/bulk-disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Bulk disable users (admin only) */
+        post: operations["bulkDisableUsers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users/bulk-enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Bulk enable users (admin only) */
+        post: operations["bulkEnableUsers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users/bulk-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Bulk delete users (admin only) */
+        post: operations["bulkDeleteUsers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/users/import": {
         parameters: {
             query?: never;
@@ -153,6 +239,126 @@ export interface components {
             /** @example ok */
             message: string;
             data: components["schemas"]["UserImportResponse"];
+        };
+        /** @enum {string} */
+        UserStatus: "ACTIVE" | "INACTIVE";
+        AdminUserVO: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: email */
+            email?: string;
+            linuxUsername?: string;
+            status?: components["schemas"]["UserStatus"];
+            cohort?: string | null;
+            displayName?: string | null;
+            studentId?: string | null;
+            notes?: string | null;
+            label?: string | null;
+            /** Format: int64 */
+            activeAccessCount?: number;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        AdminUserEnvelope: {
+            /** @example  */
+            code: string;
+            /** @example ok */
+            message: string;
+            data: components["schemas"]["AdminUserVO"];
+        };
+        UpdateAdminUserRequest: {
+            displayName?: string | null;
+            cohort?: string | null;
+            notes?: string | null;
+            label?: string | null;
+            status?: components["schemas"]["UserStatus"];
+        };
+        PageResultAdminUser: {
+            items?: components["schemas"]["AdminUserVO"][];
+            /** Format: int64 */
+            total?: number;
+            page?: number;
+            pageSize?: number;
+        };
+        PageResultAdminUserEnvelope: {
+            /** @example  */
+            code: string;
+            /** @example ok */
+            message: string;
+            data: components["schemas"]["PageResultAdminUser"];
+        };
+        DeleteAdminUserResponse: {
+            deleted?: boolean;
+            pendingRevokes?: number;
+            message?: string;
+        };
+        DeleteAdminUserResponseEnvelope: {
+            /** @example STATE_CONFLICT */
+            code: string;
+            message: string;
+            data: components["schemas"]["DeleteAdminUserResponse"];
+        };
+        BulkUserActionRequest: {
+            ids?: number[];
+            selectAll?: boolean;
+            cohort?: string;
+            /** @enum {string} */
+            status?: "ACTIVE" | "INACTIVE" | "all";
+        };
+        BulkDeleteUsersRequest: {
+            ids?: number[];
+            selectAll?: boolean;
+            cohort?: string;
+            /** @enum {string} */
+            status?: "ACTIVE" | "INACTIVE" | "all";
+            /** @default false */
+            revokeSsh: boolean;
+        };
+        BulkUserError: {
+            /** Format: int64 */
+            userId?: number;
+            /** Format: email */
+            email?: string;
+            reason?: string;
+        };
+        BulkDisableUsersResponse: {
+            disabled?: number;
+            skipped?: number;
+            errors?: components["schemas"]["BulkUserError"][];
+        };
+        BulkDisableUsersResponseEnvelope: {
+            /** @example  */
+            code: string;
+            /** @example ok */
+            message: string;
+            data: components["schemas"]["BulkDisableUsersResponse"];
+        };
+        BulkEnableUsersResponse: {
+            enabled?: number;
+            skipped?: number;
+            errors?: components["schemas"]["BulkUserError"][];
+        };
+        BulkEnableUsersResponseEnvelope: {
+            /** @example  */
+            code: string;
+            /** @example ok */
+            message: string;
+            data: components["schemas"]["BulkEnableUsersResponse"];
+        };
+        BulkDeleteUsersResponse: {
+            deleted?: number;
+            pending?: number;
+            skipped?: number;
+            errors?: components["schemas"]["BulkUserError"][];
+        };
+        BulkDeleteUsersResponseEnvelope: {
+            /** @example  */
+            code: string;
+            /** @example ok */
+            message: string;
+            data: components["schemas"]["BulkDeleteUsersResponse"];
         };
         AuthResponse: {
             /** @description JWT access token */
@@ -412,6 +618,179 @@ export interface operations {
                      *     }
                      */
                     "application/json": components["schemas"]["AuthResponseEnvelope"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    listAdminUsers: {
+        parameters: {
+            query?: {
+                cohort?: string;
+                status?: "ACTIVE" | "INACTIVE" | "all";
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated user list */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageResultAdminUserEnvelope"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    deleteAdminUser: {
+        parameters: {
+            query?: {
+                /** @description When true, revoke SSH/GPU access before delete; may return 409 if revokes are pending */
+                revokeSsh?: boolean;
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description User deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            /** @description Revoke in progress; retry delete later */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeleteAdminUserResponseEnvelope"];
+                };
+            };
+        };
+    };
+    updateAdminUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAdminUserRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated user */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUserEnvelope"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    bulkDisableUsers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkUserActionRequest"];
+            };
+        };
+        responses: {
+            /** @description Bulk disable result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkDisableUsersResponseEnvelope"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    bulkEnableUsers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkUserActionRequest"];
+            };
+        };
+        responses: {
+            /** @description Bulk enable result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkEnableUsersResponseEnvelope"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    bulkDeleteUsers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkDeleteUsersRequest"];
+            };
+        };
+        responses: {
+            /** @description Bulk delete result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkDeleteUsersResponseEnvelope"];
                 };
             };
             400: components["responses"]["BadRequest"];

@@ -59,6 +59,185 @@
         }
       }
     },
+    "/api/admin/users": {
+      "get": {
+        "tags": ["Admin"],
+        "operationId": "listAdminUsers",
+        "summary": "List users (paginated, admin only)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "cohort", "in": "query", "schema": { "type": "string" } },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "all"] }
+          },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "page_size", "in": "query", "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated user list",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PageResultAdminUserEnvelope" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/api/admin/users/{id}": {
+      "patch": {
+        "tags": ["Admin"],
+        "operationId": "updateAdminUser",
+        "summary": "Update user (admin only)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateAdminUserRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated user",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AdminUserEnvelope" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Admin"],
+        "operationId": "deleteAdminUser",
+        "summary": "Delete user (admin only)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } },
+          {
+            "name": "revokeSsh",
+            "in": "query",
+            "schema": { "type": "boolean", "default": false },
+            "description": "When true, revoke SSH/GPU access before delete; may return 409 if revokes are pending"
+          }
+        ],
+        "responses": {
+          "204": { "description": "User deleted" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": {
+            "description": "Revoke in progress; retry delete later",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DeleteAdminUserResponseEnvelope" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users/bulk-disable": {
+      "post": {
+        "tags": ["Admin"],
+        "operationId": "bulkDisableUsers",
+        "summary": "Bulk disable users (admin only)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/BulkUserActionRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bulk disable result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BulkDisableUsersResponseEnvelope" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/api/admin/users/bulk-enable": {
+      "post": {
+        "tags": ["Admin"],
+        "operationId": "bulkEnableUsers",
+        "summary": "Bulk enable users (admin only)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/BulkUserActionRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bulk enable result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BulkEnableUsersResponseEnvelope" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/api/admin/users/bulk-delete": {
+      "post": {
+        "tags": ["Admin"],
+        "operationId": "bulkDeleteUsers",
+        "summary": "Bulk delete users (admin only)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/BulkDeleteUsersRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bulk delete result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BulkDeleteUsersResponseEnvelope" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
     "/api/admin/users/import": {
       "post": {
         "tags": ["Admin"],
@@ -410,6 +589,178 @@
           "code": { "type": "string", "example": "" },
           "message": { "type": "string", "example": "ok" },
           "data": { "$ref": "#/components/schemas/UserImportResponse" }
+        }
+      },
+      "UserStatus": {
+        "type": "string",
+        "enum": ["ACTIVE", "INACTIVE"]
+      },
+      "AdminUserVO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "email": { "type": "string", "format": "email" },
+          "linuxUsername": { "type": "string" },
+          "status": { "$ref": "#/components/schemas/UserStatus" },
+          "cohort": { "type": "string", "nullable": true },
+          "displayName": { "type": "string", "nullable": true },
+          "studentId": { "type": "string", "nullable": true },
+          "notes": { "type": "string", "nullable": true },
+          "label": { "type": "string", "nullable": true },
+          "activeAccessCount": { "type": "integer", "format": "int64" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "AdminUserEnvelope": {
+        "type": "object",
+        "required": ["code", "message", "data"],
+        "properties": {
+          "code": { "type": "string", "example": "" },
+          "message": { "type": "string", "example": "ok" },
+          "data": { "$ref": "#/components/schemas/AdminUserVO" }
+        }
+      },
+      "UpdateAdminUserRequest": {
+        "type": "object",
+        "properties": {
+          "displayName": { "type": "string", "nullable": true },
+          "cohort": { "type": "string", "nullable": true },
+          "notes": { "type": "string", "nullable": true },
+          "label": { "type": "string", "nullable": true },
+          "status": { "$ref": "#/components/schemas/UserStatus" }
+        }
+      },
+      "PageResultAdminUser": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AdminUserVO" }
+          },
+          "total": { "type": "integer", "format": "int64" },
+          "page": { "type": "integer" },
+          "pageSize": { "type": "integer" }
+        }
+      },
+      "PageResultAdminUserEnvelope": {
+        "type": "object",
+        "required": ["code", "message", "data"],
+        "properties": {
+          "code": { "type": "string", "example": "" },
+          "message": { "type": "string", "example": "ok" },
+          "data": { "$ref": "#/components/schemas/PageResultAdminUser" }
+        }
+      },
+      "DeleteAdminUserResponse": {
+        "type": "object",
+        "properties": {
+          "deleted": { "type": "boolean" },
+          "pendingRevokes": { "type": "integer" },
+          "message": { "type": "string" }
+        }
+      },
+      "DeleteAdminUserResponseEnvelope": {
+        "type": "object",
+        "required": ["code", "message", "data"],
+        "properties": {
+          "code": { "type": "string", "example": "STATE_CONFLICT" },
+          "message": { "type": "string" },
+          "data": { "$ref": "#/components/schemas/DeleteAdminUserResponse" }
+        }
+      },
+      "BulkUserActionRequest": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": { "type": "integer", "format": "int64" }
+          },
+          "selectAll": { "type": "boolean" },
+          "cohort": { "type": "string" },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "all"] }
+        }
+      },
+      "BulkDeleteUsersRequest": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": { "type": "integer", "format": "int64" }
+          },
+          "selectAll": { "type": "boolean" },
+          "cohort": { "type": "string" },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "all"] },
+          "revokeSsh": { "type": "boolean", "default": false }
+        }
+      },
+      "BulkUserError": {
+        "type": "object",
+        "properties": {
+          "userId": { "type": "integer", "format": "int64" },
+          "email": { "type": "string", "format": "email" },
+          "reason": { "type": "string" }
+        }
+      },
+      "BulkDisableUsersResponse": {
+        "type": "object",
+        "properties": {
+          "disabled": { "type": "integer" },
+          "skipped": { "type": "integer" },
+          "errors": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/BulkUserError" }
+          }
+        }
+      },
+      "BulkDisableUsersResponseEnvelope": {
+        "type": "object",
+        "required": ["code", "message", "data"],
+        "properties": {
+          "code": { "type": "string", "example": "" },
+          "message": { "type": "string", "example": "ok" },
+          "data": { "$ref": "#/components/schemas/BulkDisableUsersResponse" }
+        }
+      },
+      "BulkEnableUsersResponse": {
+        "type": "object",
+        "properties": {
+          "enabled": { "type": "integer" },
+          "skipped": { "type": "integer" },
+          "errors": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/BulkUserError" }
+          }
+        }
+      },
+      "BulkEnableUsersResponseEnvelope": {
+        "type": "object",
+        "required": ["code", "message", "data"],
+        "properties": {
+          "code": { "type": "string", "example": "" },
+          "message": { "type": "string", "example": "ok" },
+          "data": { "$ref": "#/components/schemas/BulkEnableUsersResponse" }
+        }
+      },
+      "BulkDeleteUsersResponse": {
+        "type": "object",
+        "properties": {
+          "deleted": { "type": "integer" },
+          "pending": { "type": "integer" },
+          "skipped": { "type": "integer" },
+          "errors": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/BulkUserError" }
+          }
+        }
+      },
+      "BulkDeleteUsersResponseEnvelope": {
+        "type": "object",
+        "required": ["code", "message", "data"],
+        "properties": {
+          "code": { "type": "string", "example": "" },
+          "message": { "type": "string", "example": "ok" },
+          "data": { "$ref": "#/components/schemas/BulkDeleteUsersResponse" }
         }
       },
       "AuthResponse": {
