@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Copy } from 'lucide-vue-next'
 import { ref } from 'vue'
 
 import { importUsersCsv } from '@/api/admin'
@@ -46,15 +45,6 @@ async function onSubmit() {
     submitting.value = false
   }
 }
-
-async function copyValue(label: string, value: string) {
-  try {
-    await navigator.clipboard.writeText(value)
-    ui.pushToast({ type: 'success', message: `已复制${label}` })
-  } catch {
-    ui.pushToast({ type: 'warning', message: '复制失败' })
-  }
-}
 </script>
 
 <template>
@@ -63,7 +53,8 @@ async function copyValue(label: string, value: string) {
       <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">管理</p>
       <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">用户导入</h1>
       <p class="mt-2 max-w-lg text-sm leading-relaxed text-slate-500">
-        上传 CSV 批量创建 GSAD 账号。必填列：email、linux_username。
+        上传 CSV 批量创建 GSAD 账号。必填列：email、linux_username、initial_password（至少 8
+        位）。请自行通过安全渠道分发初始密码。
       </p>
     </header>
 
@@ -144,45 +135,6 @@ async function copyValue(label: string, value: string) {
               >
                 <td class="py-2 pr-4 text-slate-700">{{ err.row }}</td>
                 <td class="py-2 text-slate-600">{{ err.reason }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div
-        v-if="result.passwords.length > 0"
-        class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
-      >
-        <h2 class="text-sm font-semibold text-slate-900">系统生成的初始密码</h2>
-        <p class="mt-1 text-xs text-amber-700">
-          以下密码仅显示一次，请妥善分发给学生后建议尽快修改。
-        </p>
-        <div class="mt-3 overflow-x-auto">
-          <table class="w-full text-left text-sm">
-            <thead>
-              <tr class="border-b border-slate-100 text-xs text-slate-500">
-                <th class="pb-2 pr-4 font-medium">邮箱</th>
-                <th class="pb-2 pr-4 font-medium">初始密码</th>
-                <th class="pb-2 font-medium">操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in result.passwords" :key="row.email" class="border-b border-slate-50">
-                <td class="py-2 pr-4 text-slate-700">{{ row.email }}</td>
-                <td class="py-2 pr-4 font-mono text-xs text-slate-600">
-                  {{ row.initialPassword }}
-                </td>
-                <td class="py-2">
-                  <button
-                    type="button"
-                    class="inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-slate-600 transition hover:bg-zinc-100"
-                    @click="copyValue('密码', row.initialPassword)"
-                  >
-                    <Copy class="size-3.5" />
-                    复制
-                  </button>
-                </td>
               </tr>
             </tbody>
           </table>

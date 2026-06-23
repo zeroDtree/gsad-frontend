@@ -222,16 +222,10 @@ export interface components {
             row: number;
             reason: string;
         };
-        UserImportPassword: {
-            /** Format: email */
-            email: string;
-            initialPassword: string;
-        };
         UserImportResponse: {
             created: number;
             skipped: number;
             errors: components["schemas"]["UserImportError"][];
-            passwords: components["schemas"]["UserImportPassword"][];
         };
         UserImportResponseEnvelope: {
             /** @example  */
@@ -249,6 +243,7 @@ export interface components {
             email?: string;
             linuxUsername?: string;
             status?: components["schemas"]["UserStatus"];
+            roles?: string[];
             cohort?: string | null;
             displayName?: string | null;
             studentId?: string | null;
@@ -306,6 +301,8 @@ export interface components {
             cohort?: string;
             /** @enum {string} */
             status?: "ACTIVE" | "INACTIVE" | "all";
+            /** @enum {string} */
+            role?: "admin" | "user" | "all";
         };
         BulkDeleteUsersRequest: {
             ids?: number[];
@@ -315,6 +312,8 @@ export interface components {
             status?: "ACTIVE" | "INACTIVE" | "all";
             /** @default false */
             revokeSsh: boolean;
+            /** @enum {string} */
+            role?: "admin" | "user" | "all";
         };
         BulkUserError: {
             /** Format: int64 */
@@ -611,6 +610,7 @@ export interface operations {
             query?: {
                 cohort?: string;
                 status?: "ACTIVE" | "INACTIVE" | "all";
+                role?: "admin" | "user" | "all";
                 page?: number;
                 page_size?: number;
             };
@@ -791,7 +791,7 @@ export interface operations {
                 "multipart/form-data": {
                     /**
                      * Format: binary
-                     * @description CSV with columns: email,linux_username,display_name,student_id,cohort,initial_password,roles
+                     * @description CSV with required columns: email,linux_username,initial_password. Optional: display_name,student_id,cohort,roles. initial_password must be at least 8 characters.
                      */
                     file: string;
                 };

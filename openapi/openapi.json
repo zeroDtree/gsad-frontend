@@ -71,6 +71,11 @@
             "in": "query",
             "schema": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "all"] }
           },
+          {
+            "name": "role",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["admin", "user", "all"] }
+          },
           { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
           { "name": "page_size", "in": "query", "schema": { "type": "integer", "default": 20 } }
         ],
@@ -264,7 +269,7 @@
                   "file": {
                     "type": "string",
                     "format": "binary",
-                    "description": "CSV with columns: email,linux_username,display_name,student_id,cohort,initial_password,roles"
+                    "description": "CSV with required columns: email,linux_username,initial_password. Optional: display_name,student_id,cohort,roles. initial_password must be at least 8 characters."
                   }
                 }
               }
@@ -565,27 +570,15 @@
           "reason": { "type": "string" }
         }
       },
-      "UserImportPassword": {
-        "type": "object",
-        "required": ["email", "initialPassword"],
-        "properties": {
-          "email": { "type": "string", "format": "email" },
-          "initialPassword": { "type": "string" }
-        }
-      },
       "UserImportResponse": {
         "type": "object",
-        "required": ["created", "skipped", "errors", "passwords"],
+        "required": ["created", "skipped", "errors"],
         "properties": {
           "created": { "type": "integer" },
           "skipped": { "type": "integer" },
           "errors": {
             "type": "array",
             "items": { "$ref": "#/components/schemas/UserImportError" }
-          },
-          "passwords": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/UserImportPassword" }
           }
         }
       },
@@ -609,6 +602,10 @@
           "email": { "type": "string", "format": "email" },
           "linuxUsername": { "type": "string" },
           "status": { "$ref": "#/components/schemas/UserStatus" },
+          "roles": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
           "cohort": { "type": "string", "nullable": true },
           "displayName": { "type": "string", "nullable": true },
           "studentId": { "type": "string", "nullable": true },
@@ -685,7 +682,8 @@
           },
           "selectAll": { "type": "boolean" },
           "cohort": { "type": "string" },
-          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "all"] }
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "all"] },
+          "role": { "type": "string", "enum": ["admin", "user", "all"] }
         }
       },
       "BulkDeleteUsersRequest": {
@@ -698,7 +696,8 @@
           "selectAll": { "type": "boolean" },
           "cohort": { "type": "string" },
           "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "all"] },
-          "revokeSsh": { "type": "boolean", "default": false }
+          "revokeSsh": { "type": "boolean", "default": false },
+          "role": { "type": "string", "enum": ["admin", "user", "all"] }
         }
       },
       "BulkUserError": {

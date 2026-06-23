@@ -35,6 +35,7 @@ const page = ref(1)
 
 const filterStatus = ref<'all' | UserStatus>('all')
 const filterCohort = ref('')
+const filterRole = ref<'all' | 'admin' | 'user'>('all')
 
 const selectedUserId = ref<number | null>(null)
 const selectionMode = ref<SelectionMode>('none')
@@ -89,6 +90,26 @@ const STATUS_OPTIONS: Array<{ value: 'all' | UserStatus; label: string }> = [
   { value: 'INACTIVE', label: '禁用' },
 ]
 
+const ROLE_OPTIONS: Array<{ value: 'all' | 'admin' | 'user'; label: string }> = [
+  { value: 'all', label: '全部角色' },
+  { value: 'admin', label: '管理员' },
+  { value: 'user', label: '普通用户' },
+]
+
+function isAdminUser(user: AdminUserVO): boolean {
+  return user.roles?.some((role) => role.toLowerCase() === 'admin') ?? false
+}
+
+function roleLabel(user: AdminUserVO): string {
+  return isAdminUser(user) ? '管理员' : '普通用户'
+}
+
+function roleClass(user: AdminUserVO): string {
+  return isAdminUser(user)
+    ? 'bg-violet-50 text-violet-800 ring-violet-200'
+    : 'bg-zinc-100 text-slate-600 ring-slate-200'
+}
+
 function statusLabel(status?: UserStatus) {
   if (status === 'ACTIVE') return '启用'
   if (status === 'INACTIVE') return '禁用'
@@ -125,7 +146,7 @@ function isRowSelected(user: AdminUserVO) {
 
 function toggleRow(user: AdminUserVO, event: Event) {
   event.stopPropagation()
-  if (user.id == null) return
+  if (user.id == null || isAdminUser(user)) return
 
   if (selectionMode.value === 'allFiltered') {
     selectionMode.value = 'partial'
@@ -141,11 +162,14 @@ function toggleRow(user: AdminUserVO, event: Event) {
 }
 
 function selectPageAll() {
-  if (pageIds.value.length === 0) return
+  const selectableIds = items.value
+    .filter((u) => u.id != null && !isAdminUser(u))
+    .map((u) => u.id!)
+  if (selectableIds.length === 0) return
   const next = new Set(selectedIds.value)
-  pageIds.value.forEach((id) => next.add(id))
+  selectableIds.forEach((id) => next.add(id))
   selectedIds.value = next
-  selectionMode.value = 'page'
+  syncSelectionMode()
 }
 
 function selectAllFiltered() {
@@ -159,6 +183,7 @@ function buildBulkRequest(): BulkUserActionRequest {
       ids: [],
       cohort: filterCohort.value.trim() || undefined,
       status: filterStatus.value === 'all' ? 'all' : filterStatus.value,
+      role: filterRole.value === 'all' ? 'all' : filterRole.value,
     }
   }
   return {
@@ -184,6 +209,7 @@ async function fetchUsers() {
       page_size: PAGE_SIZE,
       status: filterStatus.value === 'all' ? undefined : filterStatus.value,
       cohort: filterCohort.value.trim() || undefined,
+      role: filterRole.value === 'all' ? undefined : filterRole.value,
     })
     items.value = result.items ?? []
     total.value = result.total ?? 0
@@ -284,7 +310,7 @@ function onPageChange(next: number) {
 
 onMounted(() => void fetchUsers())
 
-watch([filterStatus, filterCohort], () => {
+watch([filterStatus, filterCohort, filterRole], () => {
   clearSelection()
   page.value = 1
   void fetchUsers()
@@ -328,6 +354,14 @@ watch(hasSelection, (selected) => {
             class="h-9 min-w-[9rem] rounded-md border border-slate-200 bg-white px-2.5 text-sm text-slate-800 shadow-sm outline-none ring-slate-300 transition focus:ring-2"
           >
             <option v-for="opt in STATUS_OPTIONS" :key="String(opt.value)" :value="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+          <select
+            v-model="filterRole"
+            class="h-9 min-w-[9rem] rounded-md border border-slate-200 bg-white px-2.5 text-sm text-slate-800 shadow-sm outline-none ring-slate-300 transition focus:ring-2"
+          >
+            <option v-for="opt in ROLE_OPTIONS" :key="String(opt.value)" :value="opt.value">
               {{ opt.label }}
             </option>
           </select>
@@ -464,7 +498,9 @@ watch(hasSelection, (selected) => {
       >
         <p class="text-sm text-slate-500">
           {{
-            filterStatus !== 'all' || filterCohort.trim() ? '当前筛选条件下暂无用户' : '暂无用户'
+            filterStatus !== 'all' || filterCohort.trim() || filterRole !== 'all'
+              ? '当前筛选条件下暂无用户'
+              : '暂无用户'
           }}
         </p>
       </div>
@@ -480,6 +516,7 @@ watch(hasSelection, (selected) => {
               <th class="whitespace-nowrap px-4 py-3 text-left">Linux 用户名</th>
               <th class="whitespace-nowrap px-4 py-3 text-left">姓名</th>
               <th class="whitespace-nowrap px-4 py-3 text-left">届别</th>
+              <th class="whitespace-nowrap px-4 py-3 text-left">角色</th>
               <th class="whitespace-nowrap px-4 py-3 text-left">状态</th>
             </tr>
           </thead>
@@ -493,8 +530,10 @@ watch(hasSelection, (selected) => {
               <td class="px-4 py-3" @click.stop>
                 <input
                   type="checkbox"
-                  class="size-4 rounded border-slate-300"
+                  class="size-4 rounded border-slate-300 disabled:cursor-not-allowed disabled:opacity-40"
                   :checked="isRowSelected(user)"
+                  :disabled="isAdminUser(user)"
+                  :title="isAdminUser(user) ? '管理员账号不可批量操作' : undefined"
                   @change="toggleRow(user, $event)"
                 />
               </td>
@@ -502,6 +541,14 @@ watch(hasSelection, (selected) => {
               <td class="px-4 py-3 font-mono text-xs text-slate-600">{{ user.linuxUsername }}</td>
               <td class="px-4 py-3 text-slate-700">{{ user.displayName || '—' }}</td>
               <td class="px-4 py-3 text-slate-600">{{ user.cohort || '—' }}</td>
+              <td class="px-4 py-3">
+                <span
+                  class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset"
+                  :class="roleClass(user)"
+                >
+                  {{ roleLabel(user) }}
+                </span>
+              </td>
               <td class="px-4 py-3">
                 <span
                   class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset"

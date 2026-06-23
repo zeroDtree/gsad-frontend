@@ -24,6 +24,7 @@ import type {
 export type ListAdminUsersParams = {
   cohort?: string
   status?: 'ACTIVE' | 'INACTIVE' | 'all'
+  role?: 'admin' | 'user' | 'all'
   page?: number
   page_size?: number
 }

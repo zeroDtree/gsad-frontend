@@ -49,6 +49,10 @@ watch(
 
 const activeAccessCount = computed(() => props.user?.activeAccessCount ?? 0)
 
+const isAdminAccount = computed(
+  () => props.user?.roles?.some((role) => role.toLowerCase() === 'admin') ?? false,
+)
+
 const deleteWarning = computed(() => {
   if (activeAccessCount.value <= 0) return null
   if (revokeSsh.value) {
@@ -207,6 +211,7 @@ async function onDelete() {
                   状态
                 </label>
                 <select
+                  v-if="!isAdminAccount"
                   id="u-status"
                   v-model="status"
                   class="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none ring-slate-300 focus:ring-2"
@@ -214,6 +219,10 @@ async function onDelete() {
                   <option value="ACTIVE">启用</option>
                   <option value="INACTIVE">禁用</option>
                 </select>
+                <p v-else class="text-sm text-slate-800">启用</p>
+                <p v-if="isAdminAccount" class="mt-1 text-xs text-slate-500">
+                  管理员账号不可禁用或删除
+                </p>
               </div>
 
               <div class="flex gap-2 border-t border-slate-100 pt-4">
@@ -227,7 +236,7 @@ async function onDelete() {
               </div>
             </form>
 
-            <div class="border-t border-slate-100 px-6 py-4">
+            <div v-if="!isAdminAccount" class="border-t border-slate-100 px-6 py-4">
               <div v-if="!showDeleteConfirm">
                 <button
                   type="button"
