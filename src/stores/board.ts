@@ -1,6 +1,8 @@
 import { isAxiosError } from 'axios'
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+
+const PAGE_SIZE = 20
 
 import { getApiMessage } from '@/api/errors'
 import { getServers } from '@/api/public'
@@ -29,6 +31,8 @@ export const useBoardStore = defineStore('board', () => {
     return Array.from(set).sort()
   })
 
+  const page = ref(1)
+
   const filteredItems = computed(() =>
     items.value.filter((s) => {
       if (filterResourceLevel.value !== 'all' && s.resourceLevel !== filterResourceLevel.value) {
@@ -40,6 +44,30 @@ export const useBoardStore = defineStore('board', () => {
       return true
     }),
   )
+
+  const filteredTotal = computed(() => filteredItems.value.length)
+
+  const totalPages = computed(() => Math.max(1, Math.ceil(filteredTotal.value / PAGE_SIZE)))
+
+  const paginatedItems = computed(() => {
+    const start = (page.value - 1) * PAGE_SIZE
+    return filteredItems.value.slice(start, start + PAGE_SIZE)
+  })
+
+  function setPage(next: number) {
+    const clamped = Math.min(Math.max(1, next), totalPages.value)
+    if (clamped === page.value) return
+    page.value = clamped
+  }
+
+  watch([filterResourceLevel, filterStatus], () => {
+    page.value = 1
+  })
+
+  watch(filteredTotal, (total) => {
+    const maxPage = Math.max(1, Math.ceil(total / PAGE_SIZE))
+    if (page.value > maxPage) page.value = maxPage
+  })
 
   async function fetchBoard(options?: { silent?: boolean }) {
     const silent = options?.silent ?? false
@@ -72,6 +100,11 @@ export const useBoardStore = defineStore('board', () => {
     pollIntervalMs,
     resourceLevels,
     filteredItems,
+    filteredTotal,
+    page,
+    pageSize: PAGE_SIZE,
+    paginatedItems,
+    setPage,
     fetchBoard,
   }
 })

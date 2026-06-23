@@ -9,6 +9,7 @@ import BoardEmptyState from '@/components/board/BoardEmptyState.vue'
 import BoardErrorBanner from '@/components/board/BoardErrorBanner.vue'
 import BoardToolbar from '@/components/board/BoardToolbar.vue'
 import ServerList from '@/components/board/ServerList.vue'
+import ListPagination from '@/components/ui/ListPagination.vue'
 import { useBoardStore } from '@/stores/board'
 
 const board = useBoardStore()
@@ -17,6 +18,9 @@ const {
   filterResourceLevel,
   filterStatus,
   filteredItems,
+  filteredTotal,
+  page,
+  paginatedItems,
   loading,
   errorMessage,
   resourceLevels,
@@ -37,6 +41,10 @@ function onRefresh() {
 function resetFilters() {
   filterResourceLevel.value = 'all'
   filterStatus.value = 'all'
+}
+
+function onPageChange(next: number) {
+  board.setPage(next)
 }
 
 onMounted(() => {
@@ -78,7 +86,7 @@ onUnmounted(() => {
     />
 
     <div v-if="errorMessage" class="mt-2">
-      <BoardErrorBanner :message="errorMessage" @retry="onRefresh" />
+      <BoardErrorBanner :message="errorMessage" :loading="loading" @retry="onRefresh" />
     </div>
 
     <div class="mt-8">
@@ -94,7 +102,18 @@ onUnmounted(() => {
           :error-message="errorMessage"
           @refresh="onRefresh"
         />
-        <ServerList v-else-if="filteredItems.length > 0" :servers="filteredItems" />
+        <div
+          v-else-if="filteredItems.length > 0"
+          class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+        >
+          <ServerList :servers="paginatedItems" embedded />
+          <ListPagination
+            :page="page"
+            :total="filteredTotal"
+            :loading="loading"
+            @update:page="onPageChange"
+          />
+        </div>
         <div v-else-if="loading && items.length === 0" class="space-y-2">
           <div
             v-for="i in 6"

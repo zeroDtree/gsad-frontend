@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { AlertCircle, RefreshCw, ServerCrash } from 'lucide-vue-next'
+import { AlertCircle, ServerCrash } from 'lucide-vue-next'
 import { computed } from 'vue'
+
+import RefreshButton from '@/components/ui/RefreshButton.vue'
 
 const props = defineProps<{
   loading: boolean
@@ -46,19 +48,13 @@ const isError = computed(() => Boolean(props.errorMessage?.trim()))
           : '请确认后端已上报节点，或稍后重试刷新列表。'
       }}
     </p>
-    <button
-      type="button"
-      class="mt-6 inline-flex items-center gap-2 rounded-md border bg-white px-3 py-1.5 text-xs font-medium transition disabled:opacity-50"
-      :class="
-        isError
-          ? 'border-rose-200 text-rose-900 hover:bg-rose-100'
-          : 'border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-zinc-50'
-      "
-      :disabled="loading"
-      @click="emit('refresh')"
-    >
-      <RefreshCw class="size-3.5" :class="loading ? 'animate-spin' : ''" />
-      刷新
-    </button>
+    <div class="mt-6">
+      <RefreshButton
+        variant="empty"
+        :tone="isError ? 'error' : 'default'"
+        :loading="loading"
+        @click="emit('refresh')"
+      />
+    </div>
   </div>
 </template>

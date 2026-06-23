@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { RefreshCw, Upload, X } from 'lucide-vue-next'
+import { Upload, X } from 'lucide-vue-next'
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 
 import { bulkDeleteUsers, bulkDisableUsers, bulkEnableUsers, listAdminUsers } from '@/api/admin'
 import AdminUserEditDrawer from '@/components/admin/AdminUserEditDrawer.vue'
+import ListPagination from '@/components/ui/ListPagination.vue'
+import RefreshButton from '@/components/ui/RefreshButton.vue'
 import { useUiStore } from '@/stores/ui'
 import type {
   AdminUserVO,
@@ -47,10 +49,6 @@ const selectedUser = computed(() => {
   if (selectedUserId.value == null) return null
   return items.value.find((u) => u.id === selectedUserId.value) ?? null
 })
-
-const totalPages = computed(() => Math.max(1, Math.ceil(total.value / PAGE_SIZE)))
-const canGoPrev = computed(() => page.value > 1)
-const canGoNext = computed(() => page.value < totalPages.value)
 
 const pageIds = computed(() =>
   items.value.map((u) => u.id).filter((id): id is number => id != null),
@@ -280,12 +278,8 @@ async function onBulkDelete() {
   }
 }
 
-function onPrevPage() {
-  if (canGoPrev.value) page.value -= 1
-}
-
-function onNextPage() {
-  if (canGoNext.value) page.value += 1
+function onPageChange(next: number) {
+  page.value = next
 }
 
 onMounted(() => void fetchUsers())
@@ -337,15 +331,7 @@ watch(hasSelection, (selected) => {
               {{ opt.label }}
             </option>
           </select>
-          <button
-            type="button"
-            class="inline-flex h-9 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-zinc-50 disabled:opacity-50"
-            :disabled="loading"
-            @click="fetchUsers"
-          >
-            <RefreshCw class="size-4" :class="loading ? 'animate-spin' : ''" />
-            刷新
-          </button>
+          <RefreshButton variant="toolbar" :loading="loading" @click="fetchUsers" />
           <RouterLink
             to="/admin/users/import"
             class="inline-flex h-9 items-center gap-1.5 rounded-md bg-slate-900 px-3 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
@@ -361,13 +347,7 @@ watch(hasSelection, (selected) => {
         class="mb-4 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
       >
         <span class="flex-1">{{ errorMessage }}</span>
-        <button
-          type="button"
-          class="font-medium underline-offset-2 hover:underline"
-          @click="fetchUsers"
-        >
-          重试
-        </button>
+        <RefreshButton variant="text" label="重试" :loading="loading" @click="fetchUsers" />
       </div>
 
       <div
@@ -530,32 +510,13 @@ watch(hasSelection, (selected) => {
           </tbody>
         </table>
 
-        <div
-          class="flex flex-col gap-3 border-t border-slate-100 bg-zinc-50/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-        >
-          <p class="text-sm text-slate-500">
-            共 {{ total }} 条
-            <span v-if="totalPages > 1" class="text-slate-400"> · 第 {{ page }} / {{ totalPages }} 页 </span>
-          </p>
-          <div v-if="totalPages > 1" class="flex items-center gap-2">
-            <button
-              type="button"
-              class="inline-flex h-8 items-center rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
-              :disabled="!canGoPrev || loading"
-              @click="onPrevPage"
-            >
-              上一页
-            </button>
-            <button
-              type="button"
-              class="inline-flex h-8 items-center rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
-              :disabled="!canGoNext || loading"
-              @click="onNextPage"
-            >
-              下一页
-            </button>
-          </div>
-        </div>
+        <ListPagination
+          :page="page"
+          :total="total"
+          :page-size="PAGE_SIZE"
+          :loading="loading"
+          @update:page="onPageChange"
+        />
       </div>
     </div>
 

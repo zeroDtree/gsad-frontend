@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { RefreshCw } from 'lucide-vue-next'
-
 import { SERVER_STATUS_LABEL } from '@/constants/serverPresence'
+import RefreshButton from '@/components/ui/RefreshButton.vue'
 import type { ServerStatus } from '@/types/public'
 
 const resourceLevel = defineModel<string | 'all'>('resourceLevel', { required: true })
@@ -52,14 +51,6 @@ const statusOptions: Array<{ value: ServerStatus | 'all'; label: string }> = [
       </select>
     </div>
 
-    <button
-      type="button"
-      class="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-zinc-50 disabled:pointer-events-none disabled:opacity-50"
-      :disabled="loading"
-      @click="emit('refresh')"
-    >
-      <RefreshCw class="size-4" :class="loading ? 'animate-spin' : ''" />
-      刷新
-    </button>
+    <RefreshButton variant="toolbar" :loading="loading" @click="emit('refresh')" />
   </div>
 </template>

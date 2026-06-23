@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { useIntervalFn } from '@vueuse/core'
-import { RefreshCw } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import ApplicationDetailDrawer from '@/components/application/ApplicationDetailDrawer.vue'
 import AuditStatusBadge from '@/components/application/AuditStatusBadge.vue'
+import ListPagination from '@/components/ui/ListPagination.vue'
+import RefreshButton from '@/components/ui/RefreshButton.vue'
 import { AUDIT_STATUS_MAP } from '@/constants/auditStatus'
 import { formatRelativeFromUtc } from '@/lib/dayjs'
 import { useApplicationsStore } from '@/stores/applications'
@@ -14,11 +15,8 @@ import type { ApplicationItem, AuditStatus } from '@/types/application'
 
 const route = useRoute()
 const store = useApplicationsStore()
-const { items, loading, errorMessage, filterStatus, highlightId, page, total } = storeToRefs(store)
-
-const totalPages = computed(() => store.totalPages())
-const canGoPrev = computed(() => page.value > 1)
-const canGoNext = computed(() => page.value < totalPages.value)
+const { items, loading, errorMessage, filterStatus, highlightId, page, total, page_size } =
+  storeToRefs(store)
 
 const selectedAppId = ref<string | null>(null)
 
@@ -53,12 +51,8 @@ function onRefresh() {
   void store.fetchMine()
 }
 
-function onPrevPage() {
-  store.setPage(page.value - 1)
-}
-
-function onNextPage() {
-  store.setPage(page.value + 1)
+function onPageChange(next: number) {
+  store.setPage(next)
 }
 
 // Highlight newly created record for 3 s
@@ -119,15 +113,7 @@ watch(items, () => {
             </option>
           </select>
 
-          <button
-            type="button"
-            class="inline-flex h-9 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-zinc-50 disabled:opacity-50"
-            :disabled="loading"
-            @click="onRefresh"
-          >
-            <RefreshCw class="size-4" :class="loading ? 'animate-spin' : ''" />
-            刷新
-          </button>
+          <RefreshButton variant="toolbar" :loading="loading" @click="onRefresh" />
         </div>
       </header>
 
@@ -137,13 +123,7 @@ watch(items, () => {
         class="mb-4 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
       >
         <span class="flex-1">{{ errorMessage }}</span>
-        <button
-          type="button"
-          class="font-medium underline-offset-2 hover:underline"
-          @click="onRefresh"
-        >
-          重试
-        </button>
+        <RefreshButton variant="text" label="重试" :loading="loading" @click="onRefresh" />
       </div>
 
       <!-- Skeleton -->
@@ -215,34 +195,13 @@ watch(items, () => {
           </tbody>
         </table>
 
-        <div
-          class="flex flex-col gap-3 border-t border-slate-100 bg-zinc-50/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-        >
-          <p class="text-sm text-slate-500">
-            共 {{ total }} 条
-            <span v-if="totalPages > 1" class="text-slate-400">
-              · 第 {{ page }} / {{ totalPages }} 页
-            </span>
-          </p>
-          <div v-if="totalPages > 1" class="flex items-center gap-2">
-            <button
-              type="button"
-              class="inline-flex h-8 items-center rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
-              :disabled="!canGoPrev || loading"
-              @click="onPrevPage"
-            >
-              上一页
-            </button>
-            <button
-              type="button"
-              class="inline-flex h-8 items-center rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
-              :disabled="!canGoNext || loading"
-              @click="onNextPage"
-            >
-              下一页
-            </button>
-          </div>
-        </div>
+        <ListPagination
+          :page="page"
+          :total="total"
+          :page-size="page_size"
+          :loading="loading"
+          @update:page="onPageChange"
+        />
       </div>
     </div>
 

@@ -9,13 +9,17 @@ import type { PublicServerItem } from '@/types/public'
 
 defineProps<{
   servers: PublicServerItem[]
+  embedded?: boolean
 }>()
 
 const COL_COUNT = 8
 </script>
 
 <template>
-  <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+  <div
+    class="overflow-x-auto"
+    :class="embedded ? '' : 'rounded-xl border border-slate-200 bg-white'"
+  >
     <table class="w-full min-w-[720px] border-collapse text-left text-sm">
       <thead>
         <tr class="border-b border-slate-200 bg-zinc-50/90 text-xs font-medium text-slate-500">
