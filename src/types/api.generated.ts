@@ -197,7 +197,7 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /** @enum {string} */
-        ErrorCode: "INVALID_ARGUMENT" | "UNAUTHORIZED" | "FORBIDDEN" | "NOT_FOUND" | "STATE_CONFLICT" | "RATE_LIMITED" | "UPSTREAM_NETBIRD_ERROR";
+        ErrorCode: "INVALID_ARGUMENT" | "UNAUTHORIZED" | "FORBIDDEN" | "NOT_FOUND" | "STATE_CONFLICT" | "RATE_LIMITED" | "INTERNAL_ERROR";
         /** @enum {string} */
         AuditStatus: "APPROVED" | "ACTIVE" | "REVOKING" | "REVOKED" | "CANCELLED" | "FAILED_GRANT" | "FAILED_REVOKE";
         /** @enum {string} */
@@ -563,16 +563,16 @@ export interface components {
                 "application/json": components["schemas"]["ErrorEnvelope"];
             };
         };
-        /** @description Upstream NetBird or dependency error */
-        BadGateway: {
+        /** @description Unhandled server error */
+        InternalServerError: {
             headers: {
                 [name: string]: unknown;
             };
             content: {
                 /**
                  * @example {
-                 *       "code": "UPSTREAM_NETBIRD_ERROR",
-                 *       "message": "上游服务暂时不可用，请稍后重试",
+                 *       "code": "INTERNAL_ERROR",
+                 *       "message": "Unexpected error",
                  *       "data": null
                  *     }
                  */
@@ -611,7 +611,7 @@ export interface operations {
                      *       "code": "",
                      *       "message": "ok",
                      *       "data": {
-                     *         "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImRlbW9AZXhhbXBsZS5jb20iLCJyb2xlcyI6W119.mock",
+                     *         "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImRlbW9AZXhhbXBsZS5jb20iLCJyb2xlcyI6W119.demo-signature",
                      *         "email": "demo@example.com",
                      *         "roles": []
                      *       }
@@ -881,7 +881,6 @@ export interface operations {
                 };
             };
             401: components["responses"]["Unauthorized"];
-            502: components["responses"]["BadGateway"];
         };
     };
     createApplication: {
@@ -934,7 +933,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
-            502: components["responses"]["BadGateway"];
         };
     };
     revokeApplication: {
@@ -1014,7 +1012,7 @@ export interface operations {
                      *             "comment": null,
                      *             "serverIp": "10.0.0.101",
                      *             "sshUsername": "ubuntu",
-                     *             "initialPassword": "ApifoxMock-Demo",
+                     *             "initialPassword": "demo-password",
                      *             "credentialsReady": true,
                      *             "createdAt": "2026-05-18T08:00:00Z",
                      *             "updatedAt": "2026-05-18T08:00:00Z"

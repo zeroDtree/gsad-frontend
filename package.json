@@ -5,7 +5,6 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:apifox": "vite --mode apifox",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "generate:api-types": "openapi-typescript ./openapi/openapi.json -o ./src/types/api.generated.ts",

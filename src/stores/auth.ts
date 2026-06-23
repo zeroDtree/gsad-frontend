@@ -18,26 +18,6 @@ function normalizeAuthResponse(envelope: AuthResponseEnvelope): AuthResponse {
   }
 }
 
-function encodeBase64UrlJson(value: Record<string, unknown>): string {
-  const b64 = btoa(JSON.stringify(value))
-  return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-}
-
-/**
- * Apifox smart mock often returns a non-JWT `token`. Wrap email/roles in a JWT-shaped
- * string so hydrate() survives page refresh (dev:apifox only; real backend unchanged).
- */
-function toPersistableAuth(auth: AuthResponse, fallbackEmail: string): AuthResponse {
-  if (import.meta.env.MODE !== 'apifox') return auth
-  const email = auth.email.trim() || fallbackEmail.trim()
-  if (auth.token.split('.').length === 3 && decodeJwtPayload(auth.token)) {
-    return { ...auth, email }
-  }
-  const header = encodeBase64UrlJson({ alg: 'none', typ: 'JWT' })
-  const payload = encodeBase64UrlJson({ email, roles: auth.roles })
-  return { token: `${header}.${payload}.apifox-mock`, email, roles: auth.roles }
-}
-
 /**
  * Decode the base64url-encoded payload of a JWT.
  * Does NOT verify the signature (frontend can't; that's the backend's job).
@@ -116,7 +96,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function loginWithPassword(rawEmail: string, password: string) {
     const body: LoginRequest = { email: rawEmail.trim(), password }
     const { data } = await http.post<AuthResponseEnvelope>('/api/auth/login', body)
-    const auth = toPersistableAuth(normalizeAuthResponse(data), rawEmail)
+    const auth = normalizeAuthResponse(data)
     persistSession(auth.email, auth.token, auth.roles)
   }
 

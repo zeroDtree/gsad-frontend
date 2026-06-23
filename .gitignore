@@ -34,6 +34,5 @@ coverage
 
 # Environment (keep .env.example tracked)
 .env
-.env.apifox
 .env.production
 .env.test

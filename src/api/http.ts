@@ -13,7 +13,7 @@ declare module 'axios' {
 const MAX_RETRIES = 3
 const BASE_DELAY_MS = 400
 
-const SUCCESS_CODES = new Set<string>(['OK', 'SUCCESS', '0', ''])
+const SUCCESS_CODES = new Set<string>([''])
 
 const KNOWN_ERROR_CODES = new Set<string>(Object.values(BusinessCode))
 
@@ -27,19 +27,11 @@ function isKnownApiErrorCode(code: string): boolean {
 
 const apiBaseURL = (import.meta.env.VITE_API_BASE_URL ?? '').trim()
 
-/** Apifox smart mock returns random strings in `code` on HTTP 2xx; only relax checks in dev mock mode. */
-function isApifoxMockDev(): boolean {
-  if (!import.meta.env.DEV) return false
-  if (import.meta.env.MODE === 'apifox') return true
-  return /apifoxmock\.com/i.test(apiBaseURL) || /127\.0\.0\.1:4523/.test(apiBaseURL)
-}
-
-function shouldRejectBusinessEnvelope(body: unknown, httpStatus: number): boolean {
+function shouldRejectBusinessEnvelope(body: unknown, _httpStatus: number): boolean {
   const code = readBusinessCode(body)
   if (code === undefined) return false
   if (isBusinessLayerSuccess(code)) return false
   if (isKnownApiErrorCode(code)) return true
-  if (isApifoxMockDev() && httpStatus >= 200 && httpStatus < 300) return false
   return true
 }
 
@@ -66,10 +58,8 @@ function jitter(ms: number): number {
 
 function isRetryable(error: AxiosError): boolean {
   const status = error.response?.status
-  const code = getBusinessCode(error.response?.data)
   if (status === 429) return true
   if (status === 502) return true
-  if (code === BusinessCode.UPSTREAM_NETBIRD_ERROR) return true
   if (!error.response && error.code === 'ERR_NETWORK') return true
   if (!error.response && error.message === 'Network Error') return true
   return false
@@ -112,7 +102,7 @@ export const http = axios.create({
 })
 
 if (import.meta.env.DEV && apiBaseURL) {
-  console.info('[gsad] API baseURL (Apifox / custom):', apiBaseURL)
+  console.info('[gsad] API baseURL (custom):', apiBaseURL)
 }
 
 http.interceptors.request.use((config) => {
@@ -187,10 +177,10 @@ http.interceptors.response.use(
         type: 'warning',
         message: getApiMessage(payload, DEFAULT_MESSAGES[BusinessCode.RATE_LIMITED]),
       })
-    } else if (status === 502 || biz === BusinessCode.UPSTREAM_NETBIRD_ERROR) {
+    } else if (status === 500 || biz === BusinessCode.INTERNAL_ERROR) {
       await toastFromInterceptor({
         type: 'error',
-        message: getApiMessage(payload, DEFAULT_MESSAGES[BusinessCode.UPSTREAM_NETBIRD_ERROR]),
+        message: getApiMessage(payload, DEFAULT_MESSAGES[BusinessCode.INTERNAL_ERROR]),
       })
     } else if (error.response) {
       await toastFromInterceptor({

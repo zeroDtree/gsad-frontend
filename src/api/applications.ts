@@ -20,28 +20,8 @@ function readStr(raw: Record<string, unknown>, key: string): string {
 
 function readServerId(raw: Record<string, unknown>): string {
   const v = raw.serverId
-  if (typeof v === 'number' && Number.isFinite(v)) return String(Math.trunc(v))
   if (typeof v === 'string' && v.trim()) return v
   return ''
-}
-
-/** Apifox smart mock omits SSH fields; fill demo credentials in apifox dev mode only. */
-function enrichApifoxMockApplication(item: ApplicationItem): ApplicationItem {
-  if (import.meta.env.MODE !== 'apifox') return item
-  if (
-    item.audit_status === 'ACTIVE' &&
-    !item.server_ip &&
-    !item.ssh_username &&
-    !item.initial_password
-  ) {
-    return {
-      ...item,
-      server_ip: '10.0.0.101',
-      ssh_username: 'ubuntu',
-      initial_password: 'ApifoxMock-Demo',
-    }
-  }
-  return item
 }
 
 const VALID_AUDIT_STATUSES = new Set<AuditStatus>([
@@ -65,7 +45,7 @@ export function toApplicationItem(vo: ApplicationVO): ApplicationItem | null {
   const raw = vo as Record<string, unknown>
   const audit_status = parseAuditStatus(raw)
   if (!audit_status) return null
-  return enrichApifoxMockApplication({
+  return {
     id: String(raw.id ?? ''),
     user_email: readStr(raw, 'userEmail') || undefined,
     server_id: readServerId(raw),
@@ -79,7 +59,7 @@ export function toApplicationItem(vo: ApplicationVO): ApplicationItem | null {
     server_ip: readStr(raw, 'serverIp') || undefined,
     ssh_username: readStr(raw, 'sshUsername') || undefined,
     initial_password: readStr(raw, 'initialPassword') || undefined,
-  })
+  }
 }
 
 /** Request body for POST /api/applications (Jackson camelCase). */

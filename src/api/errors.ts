@@ -6,7 +6,7 @@ export const BusinessCode = {
   NOT_FOUND: 'NOT_FOUND',
   STATE_CONFLICT: 'STATE_CONFLICT',
   RATE_LIMITED: 'RATE_LIMITED',
-  UPSTREAM_NETBIRD_ERROR: 'UPSTREAM_NETBIRD_ERROR',
+  INTERNAL_ERROR: 'INTERNAL_ERROR',
 } as const
 
 export type BusinessCodeType = (typeof BusinessCode)[keyof typeof BusinessCode]
@@ -18,7 +18,7 @@ export const DEFAULT_MESSAGES: Record<BusinessCodeType, string> = {
   [BusinessCode.NOT_FOUND]: '资源不存在或已变更',
   [BusinessCode.STATE_CONFLICT]: '状态已变更，请刷新后重试',
   [BusinessCode.RATE_LIMITED]: '请求过于频繁，请稍后再试',
-  [BusinessCode.UPSTREAM_NETBIRD_ERROR]: '上游服务暂时不可用，请稍后重试',
+  [BusinessCode.INTERNAL_ERROR]: '服务器内部错误，请稍后重试',
 }
 
 export function getBusinessCode(payload: unknown): string | undefined {
