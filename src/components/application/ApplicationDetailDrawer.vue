@@ -48,7 +48,7 @@ const revokeHint = computed(() => {
     return '仅停止开通流程，服务器上尚未创建账号。'
   }
   if (status === 'ACTIVE' || status === 'FAILED_REVOKE') {
-    return '撤销将删除该服务器上您的 Linux 账号及其全部数据，且不可恢复。'
+    return '撤销将删除该服务器上你的 Linux 账号及其全部数据，且不可恢复。'
   }
   return null
 })
@@ -77,7 +77,7 @@ async function onRevoke() {
   const message =
     app.audit_status === 'APPROVED'
       ? '确定取消该申请？开通流程将停止，服务器上尚未创建账号。'
-      : '确定撤销访问？将删除该服务器上您的 Linux 账号及其全部数据，且不可恢复。'
+      : '确定撤销访问？将删除该服务器上你的 Linux 账号及其全部数据，且不可恢复。'
   if (!window.confirm(message)) return
 
   revoking.value = true

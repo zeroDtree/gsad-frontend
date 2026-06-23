@@ -18,7 +18,7 @@
   "tags": [
     { "name": "Authentication", "description": "User login" },
     { "name": "Admin", "description": "Admin-only operations (JWT with admin role)" },
-    { "name": "Servers", "description": "Public server board (no auth)" },
+    { "name": "Servers", "description": "Server board (JWT required)" },
     { "name": "Applications", "description": "Resource access applications (JWT required)" }
   ],
   "paths": {
