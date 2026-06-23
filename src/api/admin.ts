@@ -28,7 +28,9 @@ export type ListAdminUsersParams = {
   page_size?: number
 }
 
-export async function listAdminUsers(params: ListAdminUsersParams = {}): Promise<PageResultAdminUser> {
+export async function listAdminUsers(
+  params: ListAdminUsersParams = {},
+): Promise<PageResultAdminUser> {
   const { data } = await http.get<PageResultAdminUserEnvelope>('/api/admin/users', { params })
   if (!data.data) throw new Error('Invalid list response')
   return data.data

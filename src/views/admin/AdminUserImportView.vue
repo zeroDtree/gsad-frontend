@@ -13,8 +13,7 @@ const submitting = ref(false)
 const result = ref<UserImportResponse | null>(null)
 const fileError = ref('')
 
-const CSV_HEADER =
-  'email,linux_username,display_name,student_id,cohort,initial_password,roles'
+const CSV_HEADER = 'email,linux_username,display_name,student_id,cohort,initial_password,roles'
 
 function onFileChange(event: Event) {
   const input = event.target as HTMLInputElement
@@ -76,7 +75,8 @@ async function copyValue(label: string, value: string) {
         <p class="mb-1.5 text-sm font-medium text-slate-700">CSV 表头</p>
         <pre
           class="overflow-x-auto rounded-md border border-slate-100 bg-zinc-50 px-3 py-2 text-xs text-slate-600"
-        >{{ CSV_HEADER }}</pre>
+          >{{ CSV_HEADER }}</pre
+        >
       </div>
 
       <div>
@@ -168,11 +168,7 @@ async function copyValue(label: string, value: string) {
               </tr>
             </thead>
             <tbody>
-              <tr
-                v-for="row in result.passwords"
-                :key="row.email"
-                class="border-b border-slate-50"
-              >
+              <tr v-for="row in result.passwords" :key="row.email" class="border-b border-slate-50">
                 <td class="py-2 pr-4 text-slate-700">{{ row.email }}</td>
                 <td class="py-2 pr-4 font-mono text-xs text-slate-600">
                   {{ row.initialPassword }}

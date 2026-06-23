@@ -21,14 +21,18 @@ export type UpdateAdminUserRequest = components['schemas']['UpdateAdminUserReque
 export type PageResultAdminUser = components['schemas']['PageResultAdminUser']
 export type PageResultAdminUserEnvelope = components['schemas']['PageResultAdminUserEnvelope']
 export type DeleteAdminUserResponse = components['schemas']['DeleteAdminUserResponse']
-export type DeleteAdminUserResponseEnvelope = components['schemas']['DeleteAdminUserResponseEnvelope']
+export type DeleteAdminUserResponseEnvelope =
+  components['schemas']['DeleteAdminUserResponseEnvelope']
 export type BulkUserActionRequest = components['schemas']['BulkUserActionRequest']
 export type BulkDeleteUsersRequest = components['schemas']['BulkDeleteUsersRequest']
 export type BulkUserError = components['schemas']['BulkUserError']
 export type BulkDisableUsersResponse = components['schemas']['BulkDisableUsersResponse']
-export type BulkDisableUsersResponseEnvelope = components['schemas']['BulkDisableUsersResponseEnvelope']
+export type BulkDisableUsersResponseEnvelope =
+  components['schemas']['BulkDisableUsersResponseEnvelope']
 export type BulkEnableUsersResponse = components['schemas']['BulkEnableUsersResponse']
-export type BulkEnableUsersResponseEnvelope = components['schemas']['BulkEnableUsersResponseEnvelope']
+export type BulkEnableUsersResponseEnvelope =
+  components['schemas']['BulkEnableUsersResponseEnvelope']
 export type BulkDeleteUsersResponse = components['schemas']['BulkDeleteUsersResponse']
-export type BulkDeleteUsersResponseEnvelope = components['schemas']['BulkDeleteUsersResponseEnvelope']
+export type BulkDeleteUsersResponseEnvelope =
+  components['schemas']['BulkDeleteUsersResponseEnvelope']
 export type UserStatus = components['schemas']['UserStatus']

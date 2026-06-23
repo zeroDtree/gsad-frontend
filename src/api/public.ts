@@ -12,9 +12,8 @@ function asNonEmptyString(v: unknown): string | null {
   return v
 }
 
-/** Public server `id` may be string or integer from JSON. */
+/** Public server id from gsad JSON (camelCase). */
 function asServerId(v: unknown): string | null {
-  if (typeof v === 'number' && Number.isFinite(v)) return String(Math.trunc(v))
   return asNonEmptyString(v)
 }
 

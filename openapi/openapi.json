@@ -96,7 +96,12 @@
         "summary": "Update user (admin only)",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -127,7 +132,12 @@
         "summary": "Delete user (admin only)",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int64" }
+          },
           {
             "name": "revokeSsh",
             "in": "query",
@@ -984,19 +994,6 @@
             "example": {
               "code": "RATE_LIMITED",
               "message": "请求过于频繁，请稍后再试",
-              "data": null
-            }
-          }
-        }
-      },
-      "InternalServerError": {
-        "description": "Unhandled server error",
-        "content": {
-          "application/json": {
-            "schema": { "$ref": "#/components/schemas/ErrorEnvelope" },
-            "example": {
-              "code": "INTERNAL_ERROR",
-              "message": "Unexpected error",
               "data": null
             }
           }

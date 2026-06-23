@@ -8,7 +8,5 @@ declare module 'vue-router' {
     /** Full-width auth pages without app sidebar */
     authPage?: boolean
     guestOnly?: boolean
-    placeholderTitle?: string
-    placeholderHint?: string
   }
 }

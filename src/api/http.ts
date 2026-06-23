@@ -15,24 +15,16 @@ const BASE_DELAY_MS = 400
 
 const SUCCESS_CODES = new Set<string>([''])
 
-const KNOWN_ERROR_CODES = new Set<string>(Object.values(BusinessCode))
-
 function isBusinessLayerSuccess(code: string): boolean {
   return SUCCESS_CODES.has(code)
 }
 
-function isKnownApiErrorCode(code: string): boolean {
-  return KNOWN_ERROR_CODES.has(code)
-}
-
 const apiBaseURL = (import.meta.env.VITE_API_BASE_URL ?? '').trim()
 
-function shouldRejectBusinessEnvelope(body: unknown, _httpStatus: number): boolean {
+function shouldRejectBusinessEnvelope(body: unknown): boolean {
   const code = readBusinessCode(body)
   if (code === undefined) return false
-  if (isBusinessLayerSuccess(code)) return false
-  if (isKnownApiErrorCode(code)) return true
-  return true
+  return !isBusinessLayerSuccess(code)
 }
 
 function hasBusinessCodeField(body: unknown): body is { code?: unknown } {
@@ -118,7 +110,7 @@ http.interceptors.request.use((config) => {
 http.interceptors.response.use(
   (response) => {
     const body = response.data
-    if (shouldRejectBusinessEnvelope(body, response.status)) {
+    if (shouldRejectBusinessEnvelope(body)) {
       const message = getApiMessage(body, '请求失败')
       return rejectBusinessError(response, body, message)
     }

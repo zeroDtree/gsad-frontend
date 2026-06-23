@@ -140,7 +140,10 @@ function handleBackdrop(e: MouseEvent) {
               <div>
                 <p class="mb-1.5 text-xs font-medium text-slate-500">状态</p>
                 <AuditStatusBadge :status="application.audit_status" />
-                <p v-if="application.audit_status === 'REVOKING'" class="mt-1.5 text-xs text-blue-600">
+                <p
+                  v-if="application.audit_status === 'REVOKING'"
+                  class="mt-1.5 text-xs text-blue-600"
+                >
                   正在等待服务器回收账号…
                 </p>
               </div>

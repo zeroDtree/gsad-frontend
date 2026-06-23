@@ -417,13 +417,19 @@ watch(hasSelection, (selected) => {
         v-if="showDeleteConfirm && hasSelection"
         class="mb-4 space-y-3 rounded-lg border border-red-200 bg-red-50/60 p-4"
       >
-        <p class="text-sm font-medium text-red-900">确认删除选中的 {{ selectionCount }} 个 GSAD 账号？</p>
-        <p class="text-xs leading-relaxed text-red-800/90">此操作不可恢复。关联的申请记录将一并删除。</p>
+        <p class="text-sm font-medium text-red-900">
+          确认删除选中的 {{ selectionCount }} 个 GSAD 账号？
+        </p>
+        <p class="text-xs leading-relaxed text-red-800/90">
+          此操作不可恢复。关联的申请记录将一并删除。
+        </p>
         <label class="flex cursor-pointer items-start gap-2 text-sm text-red-900">
           <input v-model="revokeSsh" type="checkbox" class="mt-0.5 size-4 rounded border-red-300" />
           <span>同时撤销并删除服务器上的 SSH/GPU 账号</span>
         </label>
-        <p v-if="deleteWarning" class="text-xs leading-relaxed text-amber-800">{{ deleteWarning }}</p>
+        <p v-if="deleteWarning" class="text-xs leading-relaxed text-amber-800">
+          {{ deleteWarning }}
+        </p>
         <div class="flex gap-2">
           <button
             type="button"
@@ -458,9 +464,7 @@ watch(hasSelection, (selected) => {
       >
         <p class="text-sm text-slate-500">
           {{
-            filterStatus !== 'all' || filterCohort.trim()
-              ? '当前筛选条件下暂无用户'
-              : '暂无用户'
+            filterStatus !== 'all' || filterCohort.trim() ? '当前筛选条件下暂无用户' : '暂无用户'
           }}
         </p>
       </div>

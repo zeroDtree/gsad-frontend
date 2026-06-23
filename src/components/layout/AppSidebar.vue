@@ -19,7 +19,12 @@ const adminNav = computed(() =>
   auth.isAdmin
     ? [
         { to: '/admin/users', label: '用户管理', nav: 'admin-users' as const, icon: Users },
-        { to: '/admin/users/import', label: '用户导入', nav: 'admin-import' as const, icon: Upload },
+        {
+          to: '/admin/users/import',
+          label: '用户导入',
+          nav: 'admin-import' as const,
+          icon: Upload,
+        },
       ]
     : [],
 )
@@ -40,7 +45,12 @@ function linkClass(nav: string) {
     class="sticky top-0 flex h-svh w-56 shrink-0 flex-col border-r border-slate-200 bg-zinc-50/80 backdrop-blur-sm"
   >
     <div class="shrink-0 px-4 pb-2 pt-5">
-      <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400" title="GPU Server Access Dashboard">GSAD</p>
+      <p
+        class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400"
+        title="GPU Server Access Dashboard"
+      >
+        GSAD
+      </p>
       <p class="mt-0.5 text-sm font-semibold tracking-tight text-slate-900">资源控制台</p>
     </div>
 
@@ -62,7 +72,9 @@ function linkClass(nav: string) {
       </RouterLink>
 
       <template v-if="adminNav.length > 0">
-        <p class="mb-1 mt-4 px-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+        <p
+          class="mb-1 mt-4 px-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400"
+        >
           管理
         </p>
         <RouterLink

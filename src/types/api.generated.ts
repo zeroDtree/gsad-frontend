@@ -563,22 +563,6 @@ export interface components {
                 "application/json": components["schemas"]["ErrorEnvelope"];
             };
         };
-        /** @description Unhandled server error */
-        InternalServerError: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                /**
-                 * @example {
-                 *       "code": "INTERNAL_ERROR",
-                 *       "message": "Unexpected error",
-                 *       "data": null
-                 *     }
-                 */
-                "application/json": components["schemas"]["ErrorEnvelope"];
-            };
-        };
     };
     parameters: never;
     requestBodies: never;

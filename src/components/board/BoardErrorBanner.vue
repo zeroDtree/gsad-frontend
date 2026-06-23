@@ -25,12 +25,7 @@ const emit = defineEmits<{
         <p class="font-medium">无法加载看板</p>
         <p class="mt-0.5 text-rose-900/90">{{ message }}</p>
       </div>
-      <RefreshButton
-        variant="banner"
-        label="重试"
-        :loading="loading"
-        @click="emit('retry')"
-      />
+      <RefreshButton variant="banner" label="重试" :loading="loading" @click="emit('retry')" />
     </div>
   </Transition>
 </template>

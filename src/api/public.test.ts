@@ -19,14 +19,10 @@ describe('normalizePublicServerItem', () => {
     expect(item?.id).toBe('gpu-cn-bj-001')
   })
 
-  it('coerces numeric id to string', () => {
-    const item = normalizePublicServerItem({ ...baseServer, id: 42 } as unknown as ServerVO)
-    expect(item?.id).toBe('42')
-  })
-
   it('returns null when id is missing', () => {
-    const { id: _id, ...withoutId } = baseServer
-    expect(normalizePublicServerItem(withoutId as ServerVO)).toBeNull()
+    expect(
+      normalizePublicServerItem({ ...baseServer, id: undefined } as unknown as ServerVO),
+    ).toBeNull()
   })
 
   it('returns null for invalid status', () => {

@@ -26,9 +26,7 @@ const errors = ref({
   sshPassword: '',
 })
 
-const sortedServers = computed(() =>
-  [...boardStore.items].sort((a, b) => a.id.localeCompare(b.id)),
-)
+const sortedServers = computed(() => [...boardStore.items].sort((a, b) => a.id.localeCompare(b.id)))
 
 const serversLoading = computed(
   () => boardStore.loading && boardStore.items.length === 0 && !boardStore.errorMessage,

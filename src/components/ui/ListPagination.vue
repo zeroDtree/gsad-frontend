@@ -41,7 +41,9 @@ function onNext() {
   >
     <p class="text-sm text-slate-500">
       共 {{ total }} 条
-      <span v-if="totalPages > 1" class="text-slate-400"> · 第 {{ page }} / {{ totalPages }} 页 </span>
+      <span v-if="totalPages > 1" class="text-slate-400">
+        · 第 {{ page }} / {{ totalPages }} 页
+      </span>
     </p>
     <div v-if="totalPages > 1" class="flex items-center gap-2">
       <button
