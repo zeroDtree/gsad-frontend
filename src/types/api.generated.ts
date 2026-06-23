@@ -13,7 +13,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Login and obtain JWT */
+        /** Login and obtain session cookie */
         post: operations["login"];
         delete?: never;
         options?: never;
@@ -360,14 +360,12 @@ export interface components {
             message: string;
             data: components["schemas"]["BulkDeleteUsersResponse"];
         };
-        AuthResponse: {
-            /** @description JWT access token */
-            token: string;
+        SessionResponse: {
             /** Format: email */
             email: string;
             roles: string[];
         };
-        AuthResponseEnvelope: {
+        SessionResponseEnvelope: {
             /**
              * @description Empty string on success
              * @example
@@ -375,7 +373,7 @@ export interface components {
             code: string;
             /** @example ok */
             message: string;
-            data: components["schemas"]["AuthResponse"];
+            data: components["schemas"]["SessionResponse"];
         };
         /** @description Submit application for a specific GPU server (Jackson camelCase). */
         CreateApplicationRequest: {
@@ -595,13 +593,12 @@ export interface operations {
                      *       "code": "",
                      *       "message": "ok",
                      *       "data": {
-                     *         "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImRlbW9AZXhhbXBsZS5jb20iLCJyb2xlcyI6W119.demo-signature",
                      *         "email": "demo@example.com",
                      *         "roles": []
                      *       }
                      *     }
                      */
-                    "application/json": components["schemas"]["AuthResponseEnvelope"];
+                    "application/json": components["schemas"]["SessionResponseEnvelope"];
                 };
             };
             400: components["responses"]["BadRequest"];

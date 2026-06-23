@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import axios, { AxiosError, AxiosHeaders, type AxiosResponse } from 'axios'
+import axios, { AxiosError, type AxiosResponse } from 'axios'
 
 import { BusinessCode, DEFAULT_MESSAGES, getApiMessage, getBusinessCode } from '@/api/errors'
 
@@ -88,6 +88,7 @@ function rejectBusinessError(
 export const http = axios.create({
   baseURL: apiBaseURL,
   timeout: 30_000,
+  withCredentials: true,
   headers: {
     Accept: 'application/json',
   },
@@ -96,16 +97,6 @@ export const http = axios.create({
 if (import.meta.env.DEV && apiBaseURL) {
   console.info('[gsad] API baseURL (custom):', apiBaseURL)
 }
-
-http.interceptors.request.use((config) => {
-  const token = localStorage.getItem('GSAD_TOKEN')
-  const headers = AxiosHeaders.from(config.headers ?? {})
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`)
-  }
-  config.headers = headers
-  return config
-})
 
 http.interceptors.response.use(
   (response) => {

@@ -26,7 +26,7 @@
       "post": {
         "tags": ["Authentication"],
         "operationId": "login",
-        "summary": "Login and obtain JWT",
+        "summary": "Login and obtain session cookie",
         "requestBody": {
           "required": true,
           "content": {
@@ -40,12 +40,11 @@
             "description": "Login successful",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/AuthResponseEnvelope" },
+                "schema": { "$ref": "#/components/schemas/SessionResponseEnvelope" },
                 "example": {
                   "code": "",
                   "message": "ok",
                   "data": {
-                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImRlbW9AZXhhbXBsZS5jb20iLCJyb2xlcyI6W119.demo-signature",
                     "email": "demo@example.com",
                     "roles": []
                   }
@@ -64,7 +63,7 @@
         "tags": ["Admin"],
         "operationId": "listAdminUsers",
         "summary": "List users (paginated, admin only)",
-        "security": [{ "bearerAuth": [] }],
+        "security": [{ "sessionCookie": [] }],
         "parameters": [
           { "name": "cohort", "in": "query", "schema": { "type": "string" } },
           {
@@ -94,7 +93,7 @@
         "tags": ["Admin"],
         "operationId": "updateAdminUser",
         "summary": "Update user (admin only)",
-        "security": [{ "bearerAuth": [] }],
+        "security": [{ "sessionCookie": [] }],
         "parameters": [
           {
             "name": "id",
@@ -130,7 +129,7 @@
         "tags": ["Admin"],
         "operationId": "deleteAdminUser",
         "summary": "Delete user (admin only)",
-        "security": [{ "bearerAuth": [] }],
+        "security": [{ "sessionCookie": [] }],
         "parameters": [
           {
             "name": "id",
@@ -166,7 +165,7 @@
         "tags": ["Admin"],
         "operationId": "bulkDisableUsers",
         "summary": "Bulk disable users (admin only)",
-        "security": [{ "bearerAuth": [] }],
+        "security": [{ "sessionCookie": [] }],
         "requestBody": {
           "required": true,
           "content": {
@@ -195,7 +194,7 @@
         "tags": ["Admin"],
         "operationId": "bulkEnableUsers",
         "summary": "Bulk enable users (admin only)",
-        "security": [{ "bearerAuth": [] }],
+        "security": [{ "sessionCookie": [] }],
         "requestBody": {
           "required": true,
           "content": {
@@ -224,7 +223,7 @@
         "tags": ["Admin"],
         "operationId": "bulkDeleteUsers",
         "summary": "Bulk delete users (admin only)",
-        "security": [{ "bearerAuth": [] }],
+        "security": [{ "sessionCookie": [] }],
         "requestBody": {
           "required": true,
           "content": {
@@ -253,7 +252,7 @@
         "tags": ["Admin"],
         "operationId": "importUsers",
         "summary": "Import users from CSV (admin only)",
-        "security": [{ "bearerAuth": [] }],
+        "security": [{ "sessionCookie": [] }],
         "requestBody": {
           "required": true,
           "content": {
@@ -292,7 +291,7 @@
         "tags": ["Servers"],
         "operationId": "listServers",
         "summary": "List all servers with GPU summary",
-        "security": [{ "bearerAuth": [] }],
+        "security": [{ "sessionCookie": [] }],
         "responses": {
           "200": {
             "description": "Server list",
@@ -336,7 +335,7 @@
         "tags": ["Applications"],
         "operationId": "createApplication",
         "summary": "Submit a new resource application",
-        "security": [{ "bearerAuth": [] }],
+        "security": [{ "sessionCookie": [] }],
         "parameters": [
           {
             "name": "Idempotency-Key",
@@ -392,7 +391,7 @@
         "tags": ["Applications"],
         "operationId": "revokeApplication",
         "summary": "Revoke or cancel my application",
-        "security": [{ "bearerAuth": [] }],
+        "security": [{ "sessionCookie": [] }],
         "parameters": [
           {
             "name": "id",
@@ -435,7 +434,7 @@
         "tags": ["Applications"],
         "operationId": "listMyApplications",
         "summary": "List my applications (paginated)",
-        "security": [{ "bearerAuth": [] }],
+        "security": [{ "sessionCookie": [] }],
         "parameters": [
           {
             "name": "status",
@@ -500,11 +499,11 @@
   },
   "components": {
     "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT",
-        "description": "JWT from login; store as GSAD_TOKEN in the frontend."
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "GSAD_TOKEN",
+        "description": "HttpOnly session cookie set by POST /api/auth/login"
       }
     },
     "schemas": {
@@ -771,11 +770,10 @@
           "data": { "$ref": "#/components/schemas/BulkDeleteUsersResponse" }
         }
       },
-      "AuthResponse": {
+      "SessionResponse": {
         "type": "object",
-        "required": ["token", "email", "roles"],
+        "required": ["email", "roles"],
         "properties": {
-          "token": { "type": "string", "description": "JWT access token" },
           "email": { "type": "string", "format": "email" },
           "roles": {
             "type": "array",
@@ -783,7 +781,7 @@
           }
         }
       },
-      "AuthResponseEnvelope": {
+      "SessionResponseEnvelope": {
         "type": "object",
         "required": ["code", "message", "data"],
         "properties": {
@@ -793,7 +791,7 @@
             "example": ""
           },
           "message": { "type": "string", "example": "ok" },
-          "data": { "$ref": "#/components/schemas/AuthResponse" }
+          "data": { "$ref": "#/components/schemas/SessionResponse" }
         }
       },
       "CreateApplicationRequest": {
