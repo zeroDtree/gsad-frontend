@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import axios, { AxiosError, type AxiosResponse } from 'axios'
+import axios, { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios'
 
 import { BusinessCode, DEFAULT_MESSAGES, getApiMessage, getBusinessCode } from '@/api/errors'
 
@@ -17,6 +17,24 @@ const SUCCESS_CODES = new Set<string>([''])
 
 function isBusinessLayerSuccess(code: string): boolean {
   return SUCCESS_CODES.has(code)
+}
+
+const MUTATING_METHODS = new Set(['post', 'put', 'patch', 'delete'])
+
+function readCookie(name: string): string | undefined {
+  if (typeof document === 'undefined') return undefined
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`))
+  return match ? decodeURIComponent(match[1]) : undefined
+}
+
+function attachCsrfHeader(config: InternalAxiosRequestConfig): InternalAxiosRequestConfig {
+  const method = config.method?.toLowerCase()
+  if (!method || !MUTATING_METHODS.has(method)) return config
+  const csrfToken = readCookie('XSRF-TOKEN')
+  if (csrfToken) {
+    config.headers.set('X-XSRF-TOKEN', csrfToken)
+  }
+  return config
 }
 
 const apiBaseURL = (import.meta.env.VITE_API_BASE_URL ?? '').trim()
@@ -93,6 +111,8 @@ export const http = axios.create({
     Accept: 'application/json',
   },
 })
+
+http.interceptors.request.use((config) => attachCsrfHeader(config))
 
 if (import.meta.env.DEV && apiBaseURL) {
   console.info('[gsad] API baseURL (custom):', apiBaseURL)
