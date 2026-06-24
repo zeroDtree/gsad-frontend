@@ -2,6 +2,7 @@
 import { Cpu } from 'lucide-vue-next'
 import { RouterLink } from 'vue-router'
 
+import { formatResourceLevel } from '@/api/public'
 import { SERVER_STATUS_DOT_CLASS, SERVER_STATUS_LABEL } from '@/constants/serverPresence'
 import { formatMemMb, formatUtil, memUseRatio } from '@/lib/boardFormat'
 import { formatLocalDateTime, formatRelativeFromUtc, isReportStale } from '@/lib/dayjs'
@@ -74,9 +75,9 @@ const COL_COUNT = 8
           <td class="px-3 py-3 align-middle">
             <span
               class="inline-flex max-w-[10rem] items-center rounded border border-slate-200 bg-zinc-50 px-1.5 py-0.5 text-xs font-medium text-slate-700"
-              :title="server.resourceLevel"
+              :title="formatResourceLevel(server.resourceLevel)"
             >
-              <span class="truncate">{{ server.resourceLevel }}</span>
+              <span class="truncate">{{ formatResourceLevel(server.resourceLevel) }}</span>
             </span>
           </td>
           <td class="whitespace-nowrap px-3 py-3 align-middle font-mono text-slate-900">

@@ -56,6 +56,12 @@ export const router = createRouter({
       component: () => import('@/views/admin/AdminUserImportView.vue'),
       meta: { nav: 'admin-import', requiresAuth: true, requiresAdmin: true },
     },
+    {
+      path: '/admin/servers/import',
+      name: 'admin-servers-import',
+      component: () => import('@/views/admin/AdminServerImportView.vue'),
+      meta: { nav: 'admin-servers-import', requiresAuth: true, requiresAdmin: true },
+    },
     { path: '/:pathMatch(.*)*', redirect: '/board' },
   ],
 })

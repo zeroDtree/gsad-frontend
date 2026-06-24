@@ -27,7 +27,9 @@ export const useBoardStore = defineStore('board', () => {
   const pollIntervalMs = readPollIntervalMs()
 
   const resourceLevels = computed(() => {
-    const set = new Set(items.value.map((i) => i.resourceLevel).filter(Boolean))
+    const set = new Set(
+      items.value.map((i) => i.resourceLevel).filter((lv): lv is string => Boolean(lv?.trim())),
+    )
     return Array.from(set).sort()
   })
 
@@ -35,7 +37,10 @@ export const useBoardStore = defineStore('board', () => {
 
   const filteredItems = computed(() =>
     items.value.filter((s) => {
-      if (filterResourceLevel.value !== 'all' && s.resourceLevel !== filterResourceLevel.value) {
+      if (
+        filterResourceLevel.value !== 'all' &&
+        (s.resourceLevel ?? '') !== filterResourceLevel.value
+      ) {
         return false
       }
       if (filterStatus.value !== 'all' && s.status !== filterStatus.value) {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FilePlus2, LayoutGrid, Layers, LogIn, Upload, Users } from 'lucide-vue-next'
+import { FilePlus2, LayoutGrid, Layers, LogIn, Server, Upload, Users } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
@@ -24,6 +24,12 @@ const adminNav = computed(() =>
           label: '用户导入',
           nav: 'admin-import' as const,
           icon: Upload,
+        },
+        {
+          to: '/admin/servers/import',
+          label: '服务器导入',
+          nav: 'admin-servers-import' as const,
+          icon: Server,
         },
       ]
     : [],

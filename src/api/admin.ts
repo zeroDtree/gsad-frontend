@@ -20,6 +20,8 @@ import type {
   ResetUserPasswordRequest,
   UserImportResponse,
   UserImportResponseEnvelope,
+  ServerImportResponse,
+  ServerImportResponseEnvelope,
 } from '@/types/apiEnvelope'
 
 export type ListAdminUsersParams = {
@@ -116,6 +118,14 @@ export async function importUsersCsv(file: File): Promise<UserImportResponse> {
   const form = new FormData()
   form.append('file', file)
   const { data } = await http.post<UserImportResponseEnvelope>('/api/admin/users/import', form)
+  if (!data.data) throw new Error('Invalid import response')
+  return data.data
+}
+
+export async function importServersCsv(file: File): Promise<ServerImportResponse> {
+  const form = new FormData()
+  form.append('file', file)
+  const { data } = await http.post<ServerImportResponseEnvelope>('/api/admin/servers/import', form)
   if (!data.data) throw new Error('Invalid import response')
   return data.data
 }

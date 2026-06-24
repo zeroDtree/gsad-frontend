@@ -312,6 +312,45 @@
         }
       }
     },
+    "/api/admin/servers/import": {
+      "post": {
+        "tags": ["Admin"],
+        "operationId": "importServers",
+        "summary": "Import GPU servers from CSV (admin only)",
+        "security": [{ "sessionCookie": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "CSV with required column server_id. Optional: ssh_host, resource_level. Column agent_psk is ignored (allows batch PSK output)."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Import result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ServerImportResponseEnvelope" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
     "/api/admin/users/import": {
       "post": {
         "tags": ["Admin"],
@@ -676,6 +715,35 @@
           "data": { "$ref": "#/components/schemas/UserImportResponse" }
         }
       },
+      "ServerImportError": {
+        "type": "object",
+        "required": ["row", "reason"],
+        "properties": {
+          "row": { "type": "integer" },
+          "reason": { "type": "string" }
+        }
+      },
+      "ServerImportResponse": {
+        "type": "object",
+        "required": ["created", "skipped", "errors"],
+        "properties": {
+          "created": { "type": "integer" },
+          "skipped": { "type": "integer" },
+          "errors": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ServerImportError" }
+          }
+        }
+      },
+      "ServerImportResponseEnvelope": {
+        "type": "object",
+        "required": ["code", "message", "data"],
+        "properties": {
+          "code": { "type": "string", "example": "" },
+          "message": { "type": "string", "example": "ok" },
+          "data": { "$ref": "#/components/schemas/ServerImportResponse" }
+        }
+      },
       "UserStatus": {
         "type": "string",
         "enum": ["ACTIVE", "INACTIVE"]
@@ -972,7 +1040,7 @@
             "type": "string",
             "description": "Stable server id used when submitting applications"
           },
-          "resourceLevel": { "type": "string" },
+          "resourceLevel": { "type": "string", "nullable": true },
           "status": { "$ref": "#/components/schemas/ServerStatus" },
           "lastReportedAt": { "type": "string", "format": "date-time", "nullable": true },
           "collectedAt": { "type": "string", "format": "date-time", "nullable": true },

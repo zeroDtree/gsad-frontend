@@ -21,7 +21,7 @@ export interface GpuSummaryBlock {
 export interface PublicServerItem {
   /** Stable GPU server id (unique); also used for display. */
   id: string
-  resourceLevel: string
+  resourceLevel: string | null
   status: ServerStatus
   /** Server ingest time (ISO 8601 UTC); null if never received a report. */
   lastReportedAt: string | null

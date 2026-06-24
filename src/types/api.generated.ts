@@ -141,6 +141,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/servers/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import GPU servers from CSV (admin only) */
+        post: operations["importServers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/users/import": {
         parameters: {
             query?: never;
@@ -277,6 +294,22 @@ export interface components {
             /** @example ok */
             message: string;
             data: components["schemas"]["UserImportResponse"];
+        };
+        ServerImportError: {
+            row: number;
+            reason: string;
+        };
+        ServerImportResponse: {
+            created: number;
+            skipped: number;
+            errors: components["schemas"]["ServerImportError"][];
+        };
+        ServerImportResponseEnvelope: {
+            /** @example  */
+            code: string;
+            /** @example ok */
+            message: string;
+            data: components["schemas"]["ServerImportResponse"];
         };
         /** @enum {string} */
         UserStatus: "ACTIVE" | "INACTIVE";
@@ -487,7 +520,7 @@ export interface components {
         ServerVO: {
             /** @description Stable server id used when submitting applications */
             id?: string;
-            resourceLevel?: string;
+            resourceLevel?: string | null;
             status?: components["schemas"]["ServerStatus"];
             /** Format: date-time */
             lastReportedAt?: string | null;
@@ -871,6 +904,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BulkDeleteUsersResponseEnvelope"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    importServers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description CSV with required column server_id. Optional: ssh_host, resource_level. Column agent_psk is ignored (allows batch PSK output).
+                     */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Import result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServerImportResponseEnvelope"];
                 };
             };
             400: components["responses"]["BadRequest"];

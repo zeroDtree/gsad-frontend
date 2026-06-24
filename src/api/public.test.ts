@@ -34,4 +34,12 @@ describe('normalizePublicServerItem', () => {
   it('returns null when id is empty', () => {
     expect(normalizePublicServerItem({ ...baseServer, id: '  ' })).toBeNull()
   })
+
+  it('allows missing resourceLevel', () => {
+    const item = normalizePublicServerItem({
+      ...baseServer,
+      resourceLevel: undefined,
+    } as unknown as ServerVO)
+    expect(item?.resourceLevel).toBeNull()
+  })
 })

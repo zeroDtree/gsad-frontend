@@ -48,12 +48,18 @@ function normalizeGpuRow(raw: NonNullable<ServerVO['gpus']>[number]): GpuRow | n
   }
 }
 
+/** Display label for resource level; null/blank → em dash. */
+export function formatResourceLevel(level: string | null | undefined): string {
+  if (typeof level !== 'string' || !level.trim()) return '—'
+  return level.trim()
+}
+
 /** Normalize a public server row from gsad JSON (camelCase) into PublicServerItem. */
 export function normalizePublicServerItem(raw: ServerVO): PublicServerItem | null {
   const id = asServerId(raw.id)
   const resourceLevel = asNonEmptyString(raw.resourceLevel)
   const status = asNonEmptyString(raw.status)
-  if (!id || !resourceLevel || !status) return null
+  if (!id || !status) return null
   const lastReportedAt =
     raw.lastReportedAt === null || raw.lastReportedAt === undefined
       ? null

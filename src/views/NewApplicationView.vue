@@ -4,6 +4,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { useUiStore } from '@/stores/ui'
+import { formatResourceLevel } from '@/api/public'
 import { useApplicationsStore } from '@/stores/applications'
 import { useBoardStore } from '@/stores/board'
 
@@ -127,7 +128,7 @@ async function onSubmit() {
             {{ sortedServers.length === 0 ? '暂无可选节点（请确认看板有上报数据）' : '请选择…' }}
           </option>
           <option v-for="s in sortedServers" :key="s.id" :value="s.id">
-            {{ s.id }} · {{ s.resourceLevel }} · {{ s.status }}
+            {{ s.id }} · {{ formatResourceLevel(s.resourceLevel) }} · {{ s.status }}
           </option>
         </select>
         <p v-if="boardStore.errorMessage" class="mt-1 text-xs text-amber-700">
