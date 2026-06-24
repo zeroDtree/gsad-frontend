@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { LogOut, UserRound } from 'lucide-vue-next'
-import { useRouter } from 'vue-router'
+import { KeyRound, LogOut, UserRound } from 'lucide-vue-next'
+import { RouterLink, useRouter } from 'vue-router'
 
 import { useAuthStore } from '@/stores/auth'
 
@@ -32,6 +32,15 @@ async function logout() {
         </p>
       </div>
     </div>
+
+    <RouterLink
+      v-if="auth.isAuthenticated"
+      to="/account/password"
+      class="mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[11px] font-medium text-slate-700 transition hover:border-slate-300 hover:bg-zinc-50"
+    >
+      <KeyRound class="size-3.5 opacity-70" />
+      修改密码
+    </RouterLink>
 
     <button
       v-if="auth.isAuthenticated"

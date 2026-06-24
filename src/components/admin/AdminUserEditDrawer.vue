@@ -2,7 +2,7 @@
 import { Trash2, X } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 
-import { deleteAdminUser, updateAdminUser } from '@/api/admin'
+import { deleteAdminUser, resetAdminUserPassword, updateAdminUser } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 import type { AdminUserVO, UpdateAdminUserRequest, UserStatus } from '@/types/apiEnvelope'
 
@@ -31,6 +31,15 @@ const showDeleteConfirm = ref(false)
 const revokeSsh = ref(false)
 const deleting = ref(false)
 
+const MIN_PASSWORD_LEN = 8
+const MAX_PASSWORD_LEN = 128
+const resetNewPassword = ref('')
+const resetConfirmPassword = ref('')
+const resetPasswordVisible = ref(false)
+const resetConfirmVisible = ref(false)
+const resettingPassword = ref(false)
+const resetPasswordError = ref('')
+
 watch(
   () => props.user,
   (user) => {
@@ -43,6 +52,12 @@ watch(
     revokeSsh.value = false
     saving.value = false
     deleting.value = false
+    resetNewPassword.value = ''
+    resetConfirmPassword.value = ''
+    resetPasswordVisible.value = false
+    resetConfirmVisible.value = false
+    resettingPassword.value = false
+    resetPasswordError.value = ''
   },
   { immediate: true },
 )
@@ -85,6 +100,38 @@ async function onSave() {
     // http interceptor shows error toast
   } finally {
     saving.value = false
+  }
+}
+
+async function onResetPassword() {
+  const user = props.user
+  if (!user?.id || resettingPassword.value) return
+
+  resetPasswordError.value = ''
+  const pwd = resetNewPassword.value
+  if (pwd.length < MIN_PASSWORD_LEN) {
+    resetPasswordError.value = `密码至少 ${MIN_PASSWORD_LEN} 位`
+    return
+  }
+  if (pwd.length > MAX_PASSWORD_LEN) {
+    resetPasswordError.value = `密码不得超过 ${MAX_PASSWORD_LEN} 位`
+    return
+  }
+  if (pwd !== resetConfirmPassword.value) {
+    resetPasswordError.value = '两次输入的密码不一致'
+    return
+  }
+
+  resettingPassword.value = true
+  try {
+    await resetAdminUserPassword(user.id, { newPassword: pwd })
+    ui.pushToast({ type: 'success', message: '登录密码已重置' })
+    resetNewPassword.value = ''
+    resetConfirmPassword.value = ''
+  } catch {
+    // http interceptor shows error toast
+  } finally {
+    resettingPassword.value = false
   }
 }
 
@@ -235,6 +282,67 @@ async function onDelete() {
                 </button>
               </div>
             </form>
+
+            <div v-if="!isAdminAccount" class="border-t border-slate-100 px-6 py-4">
+              <p class="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">
+                重置登录密码
+              </p>
+              <div class="space-y-3">
+                <div>
+                  <label class="mb-1 block text-xs font-medium text-slate-500" for="u-reset-pwd">
+                    新密码
+                  </label>
+                  <div class="relative">
+                    <input
+                      id="u-reset-pwd"
+                      v-model="resetNewPassword"
+                      :type="resetPasswordVisible ? 'text' : 'password'"
+                      autocomplete="new-password"
+                      class="h-9 w-full rounded-md border border-slate-200 px-3 pr-10 text-sm text-slate-800 outline-none ring-slate-300 focus:ring-2"
+                    />
+                    <button
+                      type="button"
+                      class="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 hover:text-slate-600"
+                      :aria-label="resetPasswordVisible ? '隐藏密码' : '显示密码'"
+                      @click="resetPasswordVisible = !resetPasswordVisible"
+                    >
+                      {{ resetPasswordVisible ? '隐藏' : '显示' }}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label class="mb-1 block text-xs font-medium text-slate-500" for="u-reset-confirm">
+                    确认新密码
+                  </label>
+                  <div class="relative">
+                    <input
+                      id="u-reset-confirm"
+                      v-model="resetConfirmPassword"
+                      :type="resetConfirmVisible ? 'text' : 'password'"
+                      autocomplete="new-password"
+                      class="h-9 w-full rounded-md border border-slate-200 px-3 pr-10 text-sm text-slate-800 outline-none ring-slate-300 focus:ring-2"
+                    />
+                    <button
+                      type="button"
+                      class="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 hover:text-slate-600"
+                      :aria-label="resetConfirmVisible ? '隐藏密码' : '显示密码'"
+                      @click="resetConfirmVisible = !resetConfirmVisible"
+                    >
+                      {{ resetConfirmVisible ? '隐藏' : '显示' }}
+                    </button>
+                  </div>
+                </div>
+                <p v-if="resetPasswordError" class="text-xs text-red-600">{{ resetPasswordError }}</p>
+                <button
+                  type="button"
+                  class="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-zinc-50 disabled:opacity-60"
+                  :disabled="resettingPassword || !resetNewPassword || !resetConfirmPassword"
+                  @click="onResetPassword"
+                >
+                  {{ resettingPassword ? '重置中…' : '重置密码' }}
+                </button>
+              </div>
+            </div>
 
             <div v-if="!isAdminAccount" class="border-t border-slate-100 px-6 py-4">
               <div v-if="!showDeleteConfirm">

@@ -9,6 +9,8 @@ export type ApplicationResponseEnvelope = components['schemas']['ApplicationResp
 export type PageResultApplicationEnvelope = components['schemas']['PageResultApplicationEnvelope']
 
 export type LoginRequest = components['schemas']['LoginRequest']
+export type ChangePasswordRequest = components['schemas']['ChangePasswordRequest']
+export type ResetUserPasswordRequest = components['schemas']['ResetUserPasswordRequest']
 export type SessionResponse = components['schemas']['SessionResponse']
 export type SessionResponseEnvelope = components['schemas']['SessionResponseEnvelope']
 export type ApplicationVO = components['schemas']['ApplicationVO']

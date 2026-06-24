@@ -17,6 +17,7 @@ import type {
   PageResultAdminUser,
   PageResultAdminUserEnvelope,
   UpdateAdminUserRequest,
+  ResetUserPasswordRequest,
   UserImportResponse,
   UserImportResponseEnvelope,
 } from '@/types/apiEnvelope'
@@ -44,6 +45,13 @@ export async function updateAdminUser(
   const { data } = await http.patch<AdminUserEnvelope>(`/api/admin/users/${id}`, body)
   if (!data.data) throw new Error('Invalid update response')
   return data.data
+}
+
+export async function resetAdminUserPassword(
+  id: number,
+  body: ResetUserPasswordRequest,
+): Promise<void> {
+  await http.post(`/api/admin/users/${id}/reset-password`, body)
 }
 
 export type DeleteAdminUserResult =

@@ -39,6 +39,12 @@ export const router = createRouter({
       meta: { nav: 'mine', requiresAuth: true },
     },
     {
+      path: '/account/password',
+      name: 'account-password',
+      component: () => import('@/views/account/ChangePasswordView.vue'),
+      meta: { nav: 'account-password', requiresAuth: true },
+    },
+    {
       path: '/admin/users',
       name: 'admin-users',
       component: () => import('@/views/admin/AdminUserListView.vue'),
