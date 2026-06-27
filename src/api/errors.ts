@@ -1,3 +1,5 @@
+import { t } from '@/i18n/t'
+
 /** Document §7 business codes */
 export const BusinessCode = {
   INVALID_ARGUMENT: 'INVALID_ARGUMENT',
@@ -11,15 +13,7 @@ export const BusinessCode = {
 
 export type BusinessCodeType = (typeof BusinessCode)[keyof typeof BusinessCode]
 
-export const DEFAULT_MESSAGES: Record<BusinessCodeType, string> = {
-  [BusinessCode.INVALID_ARGUMENT]: '请求参数无效',
-  [BusinessCode.UNAUTHORIZED]: '登录已失效，请重新登录',
-  [BusinessCode.FORBIDDEN]: '权限不足',
-  [BusinessCode.NOT_FOUND]: '资源不存在或已变更',
-  [BusinessCode.STATE_CONFLICT]: '状态已变更，请刷新后重试',
-  [BusinessCode.RATE_LIMITED]: '请求过于频繁，请稍后再试',
-  [BusinessCode.INTERNAL_ERROR]: '服务器内部错误，请稍后重试',
-}
+const BUSINESS_CODES = new Set<string>(Object.values(BusinessCode))
 
 export function getBusinessCode(payload: unknown): string | undefined {
   if (payload && typeof payload === 'object' && 'code' in payload) {
@@ -35,4 +29,16 @@ export function getApiMessage(payload: unknown, fallback: string): string {
     if (typeof m === 'string' && m.length > 0) return m
   }
   return fallback
+}
+
+export function getLocalizedError(payload: unknown): string {
+  const code = getBusinessCode(payload)
+  if (code && BUSINESS_CODES.has(code)) {
+    return t(`errors.${code}`)
+  }
+  return t('errors.requestFailed')
+}
+
+export function getLocalizedErrorForCode(code: BusinessCodeType): string {
+  return t(`errors.${code}`)
 }

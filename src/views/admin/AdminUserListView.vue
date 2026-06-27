@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Upload, X } from 'lucide-vue-next'
 import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 
 import { bulkDeleteUsers, bulkDisableUsers, bulkEnableUsers, listAdminUsers } from '@/api/admin'
@@ -18,6 +19,7 @@ import type {
 } from '@/types/apiEnvelope'
 
 const PAGE_SIZE = 20
+const { t } = useI18n()
 const ui = useUiStore()
 
 type SelectionMode = 'none' | 'partial' | 'page' | 'allFiltered'
@@ -63,9 +65,9 @@ const hasSelection = computed(() => selectionCount.value > 0)
 
 const selectionStatusText = computed(() => {
   if (selectionMode.value === 'allFiltered') {
-    return `已选 ${selectionCount.value} 人（当前筛选）`
+    return t('admin.selectedCountFiltered', { count: selectionCount.value })
   }
-  return `已选 ${selectionCount.value} 人`
+  return t('admin.selectedCount', { count: selectionCount.value })
 })
 
 const selectedActiveAccessCount = computed(() => {
@@ -79,29 +81,29 @@ const deleteWarning = computed(() => {
   const count = selectedActiveAccessCount.value
   if (count == null || count <= 0) return null
   if (revokeSsh.value) {
-    return `所选用户共有 ${count} 个活跃/撤销中的 GPU 访问，勾选后将发起服务器账号回收。`
+    return t('admin.deleteWarningWithRevoke', { count })
   }
-  return `所选用户共有 ${count} 个活跃 GPU 访问；不勾选时服务器 SSH 账号将保留。`
+  return t('admin.deleteWarningNoRevoke', { count })
 })
 
-const STATUS_OPTIONS: Array<{ value: 'all' | UserStatus; label: string }> = [
-  { value: 'all', label: '全部状态' },
-  { value: 'ACTIVE', label: '启用' },
-  { value: 'INACTIVE', label: '禁用' },
-]
+const STATUS_OPTIONS = computed(() => [
+  { value: 'all' as const, label: t('common.allStatus') },
+  { value: 'ACTIVE' as const, label: t('admin.statusActive') },
+  { value: 'INACTIVE' as const, label: t('admin.statusInactive') },
+])
 
-const ROLE_OPTIONS: Array<{ value: 'all' | 'admin' | 'user'; label: string }> = [
-  { value: 'all', label: '全部角色' },
-  { value: 'admin', label: '管理员' },
-  { value: 'user', label: '普通用户' },
-]
+const ROLE_OPTIONS = computed(() => [
+  { value: 'all' as const, label: t('admin.allRoles') },
+  { value: 'admin' as const, label: t('admin.roleAdmin') },
+  { value: 'user' as const, label: t('admin.roleUser') },
+])
 
 function isAdminUser(user: AdminUserVO): boolean {
   return user.roles?.some((role) => role.toLowerCase() === 'admin') ?? false
 }
 
 function roleLabel(user: AdminUserVO): string {
-  return isAdminUser(user) ? '管理员' : '普通用户'
+  return isAdminUser(user) ? t('admin.roleAdmin') : t('admin.roleUser')
 }
 
 function roleClass(user: AdminUserVO): string {
@@ -111,8 +113,8 @@ function roleClass(user: AdminUserVO): string {
 }
 
 function statusLabel(status?: UserStatus) {
-  if (status === 'ACTIVE') return '启用'
-  if (status === 'INACTIVE') return '禁用'
+  if (status === 'ACTIVE') return t('admin.statusActive')
+  if (status === 'INACTIVE') return t('admin.statusInactive')
   return status ?? '—'
 }
 
@@ -214,7 +216,7 @@ async function fetchUsers() {
     items.value = result.items ?? []
     total.value = result.total ?? 0
   } catch {
-    errorMessage.value = '加载用户列表失败'
+    errorMessage.value = t('admin.loadUsersFailed')
   } finally {
     loading.value = false
   }
@@ -240,13 +242,16 @@ function onUserDeleted() {
 
 async function onBulkEnable() {
   if (!hasSelection.value || bulkLoading.value) return
-  if (!window.confirm(`确定启用选中的 ${selectionCount.value} 个用户？`)) return
+  if (!window.confirm(t('admin.confirmEnableUsers', { count: selectionCount.value }))) return
 
   bulkLoading.value = true
   try {
     const result = await bulkEnableUsers(buildBulkRequest())
     bulkResultModal.value = { type: 'enable', data: result }
-    ui.pushToast({ type: 'success', message: `已启用 ${result.enabled ?? 0} 个用户` })
+    ui.pushToast({
+      type: 'success',
+      message: t('admin.usersEnabled', { count: result.enabled ?? 0 }),
+    })
     clearSelection()
     void fetchUsers()
   } catch {
@@ -258,13 +263,16 @@ async function onBulkEnable() {
 
 async function onBulkDisable() {
   if (!hasSelection.value || bulkLoading.value) return
-  if (!window.confirm(`确定禁用选中的 ${selectionCount.value} 个用户？`)) return
+  if (!window.confirm(t('admin.confirmDisableUsers', { count: selectionCount.value }))) return
 
   bulkLoading.value = true
   try {
     const result = await bulkDisableUsers(buildBulkRequest())
     bulkResultModal.value = { type: 'disable', data: result }
-    ui.pushToast({ type: 'success', message: `已禁用 ${result.disabled ?? 0} 个用户` })
+    ui.pushToast({
+      type: 'success',
+      message: t('admin.usersDisabled', { count: result.disabled ?? 0 }),
+    })
     clearSelection()
     void fetchUsers()
   } catch {
@@ -289,10 +297,16 @@ async function onBulkDelete() {
     if ((result.pending ?? 0) > 0) {
       ui.pushToast({
         type: 'warning',
-        message: `已删除 ${result.deleted ?? 0} 个；${result.pending} 个 SSH 撤销进行中，请稍后重试删除`,
+        message: t('admin.usersDeletedPending', {
+          deleted: result.deleted ?? 0,
+          pending: result.pending,
+        }),
       })
     } else {
-      ui.pushToast({ type: 'success', message: `已删除 ${result.deleted ?? 0} 个用户` })
+      ui.pushToast({
+        type: 'success',
+        message: t('admin.usersDeleted', { count: result.deleted ?? 0 }),
+      })
     }
 
     clearSelection()
@@ -338,15 +352,19 @@ watch(hasSelection, (selected) => {
     <div class="mx-auto max-w-5xl px-6 py-8 lg:px-10 lg:py-10">
       <header class="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">管理</p>
-          <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">用户管理</h1>
-          <p class="mt-2 text-sm text-slate-500">查看、编辑、禁用或删除 GSAD 账号。</p>
+          <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+            {{ t('admin.section') }}
+          </p>
+          <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
+            {{ t('admin.userManagement') }}
+          </h1>
+          <p class="mt-2 text-sm text-slate-500">{{ t('admin.userManagementDesc') }}</p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
           <input
             v-model="filterCohort"
             type="text"
-            placeholder="届别筛选"
+            :placeholder="t('admin.cohortFilter')"
             class="h-9 min-w-[7rem] rounded-md border border-slate-200 bg-white px-2.5 text-sm text-slate-800 shadow-sm outline-none ring-slate-300 transition focus:ring-2"
           />
           <select
@@ -371,7 +389,7 @@ watch(hasSelection, (selected) => {
             class="inline-flex h-9 items-center gap-1.5 rounded-md bg-slate-900 px-3 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
           >
             <Upload class="size-4" />
-            导入用户
+            {{ t('admin.importUsers') }}
           </RouterLink>
         </div>
       </header>
@@ -381,7 +399,12 @@ watch(hasSelection, (selected) => {
         class="mb-4 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
       >
         <span class="flex-1">{{ errorMessage }}</span>
-        <RefreshButton variant="text" label="重试" :loading="loading" @click="fetchUsers" />
+        <RefreshButton
+          variant="text"
+          :label="t('common.retry')"
+          :loading="loading"
+          @click="fetchUsers"
+        />
       </div>
 
       <div
@@ -395,7 +418,7 @@ watch(hasSelection, (selected) => {
             :disabled="pageIds.length === 0"
             @click="selectPageAll"
           >
-            全选本页
+            {{ t('admin.selectPage') }}
           </button>
           <button
             type="button"
@@ -403,7 +426,7 @@ watch(hasSelection, (selected) => {
             :disabled="total === 0"
             @click="selectAllFiltered"
           >
-            全选全部 ({{ total }})
+            {{ t('admin.selectAll', { total }) }}
           </button>
           <button
             type="button"
@@ -411,7 +434,7 @@ watch(hasSelection, (selected) => {
             :disabled="!hasSelection"
             @click="clearSelection"
           >
-            取消全选
+            {{ t('admin.deselectAll') }}
           </button>
         </div>
         <span class="text-sm text-slate-600">{{ selectionStatusText }}</span>
@@ -427,7 +450,7 @@ watch(hasSelection, (selected) => {
           :disabled="!hasSelection || bulkLoading"
           @click="onBulkEnable"
         >
-          {{ bulkLoading ? '处理中…' : '启用选中' }}
+          {{ bulkLoading ? t('common.processing') : t('admin.enableSelected') }}
         </button>
         <button
           type="button"
@@ -435,7 +458,7 @@ watch(hasSelection, (selected) => {
           :disabled="!hasSelection || bulkLoading"
           @click="onBulkDisable"
         >
-          {{ bulkLoading ? '处理中…' : '禁用选中' }}
+          {{ bulkLoading ? t('common.processing') : t('admin.disableSelected') }}
         </button>
         <button
           type="button"
@@ -443,7 +466,7 @@ watch(hasSelection, (selected) => {
           :disabled="!hasSelection || bulkLoading"
           @click="showDeleteConfirm = !showDeleteConfirm"
         >
-          删除选中
+          {{ t('admin.deleteSelected') }}
         </button>
       </div>
 
@@ -452,14 +475,14 @@ watch(hasSelection, (selected) => {
         class="mb-4 space-y-3 rounded-lg border border-red-200 bg-red-50/60 p-4"
       >
         <p class="text-sm font-medium text-red-900">
-          确认删除选中的 {{ selectionCount }} 个 GSAD 账号？
+          {{ t('admin.confirmDeleteUsers', { count: selectionCount }) }}
         </p>
         <p class="text-xs leading-relaxed text-red-800/90">
-          此操作不可恢复。关联的申请记录将一并删除。
+          {{ t('admin.deleteWarning') }}
         </p>
         <label class="flex cursor-pointer items-start gap-2 text-sm text-red-900">
           <input v-model="revokeSsh" type="checkbox" class="mt-0.5 size-4 rounded border-red-300" />
-          <span>同时撤销并删除服务器上的 SSH/GPU 账号</span>
+          <span>{{ t('admin.revokeSshOnDelete') }}</span>
         </label>
         <p v-if="deleteWarning" class="text-xs leading-relaxed text-amber-800">
           {{ deleteWarning }}
@@ -471,7 +494,7 @@ watch(hasSelection, (selected) => {
             :disabled="bulkLoading"
             @click="showDeleteConfirm = false"
           >
-            取消
+            {{ t('common.cancel') }}
           </button>
           <button
             type="button"
@@ -479,7 +502,7 @@ watch(hasSelection, (selected) => {
             :disabled="bulkLoading"
             @click="onBulkDelete"
           >
-            {{ bulkLoading ? '处理中…' : '确认删除' }}
+            {{ bulkLoading ? t('common.processing') : t('admin.confirmDelete') }}
           </button>
         </div>
       </div>
@@ -499,8 +522,8 @@ watch(hasSelection, (selected) => {
         <p class="text-sm text-slate-500">
           {{
             filterStatus !== 'all' || filterCohort.trim() || filterRole !== 'all'
-              ? '当前筛选条件下暂无用户'
-              : '暂无用户'
+              ? t('admin.noUsersFiltered')
+              : t('admin.noUsers')
           }}
         </p>
       </div>
@@ -512,12 +535,14 @@ watch(hasSelection, (selected) => {
               class="border-b border-slate-100 bg-zinc-50/80 text-xs font-medium uppercase tracking-wide text-slate-500"
             >
               <th class="w-10 px-4 py-3" aria-hidden="true"></th>
-              <th class="whitespace-nowrap px-4 py-3 text-left">邮箱</th>
-              <th class="whitespace-nowrap px-4 py-3 text-left">Linux 用户名</th>
-              <th class="whitespace-nowrap px-4 py-3 text-left">姓名</th>
-              <th class="whitespace-nowrap px-4 py-3 text-left">届别</th>
-              <th class="whitespace-nowrap px-4 py-3 text-left">角色</th>
-              <th class="whitespace-nowrap px-4 py-3 text-left">状态</th>
+              <th class="whitespace-nowrap px-4 py-3 text-left">{{ t('admin.colEmail') }}</th>
+              <th class="whitespace-nowrap px-4 py-3 text-left">
+                {{ t('admin.colLinuxUsername') }}
+              </th>
+              <th class="whitespace-nowrap px-4 py-3 text-left">{{ t('admin.colName') }}</th>
+              <th class="whitespace-nowrap px-4 py-3 text-left">{{ t('admin.colCohort') }}</th>
+              <th class="whitespace-nowrap px-4 py-3 text-left">{{ t('admin.colRole') }}</th>
+              <th class="whitespace-nowrap px-4 py-3 text-left">{{ t('common.status') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
@@ -533,7 +558,7 @@ watch(hasSelection, (selected) => {
                   class="size-4 rounded border-slate-300 disabled:cursor-not-allowed disabled:opacity-40"
                   :checked="isRowSelected(user)"
                   :disabled="isAdminUser(user)"
-                  :title="isAdminUser(user) ? '管理员账号不可批量操作' : undefined"
+                  :title="isAdminUser(user) ? t('admin.adminNoBulkOps') : undefined"
                   @change="toggleRow(user, $event)"
                 />
               </td>
@@ -598,16 +623,16 @@ watch(hasSelection, (selected) => {
                 <h2 class="text-base font-semibold text-slate-900">
                   {{
                     bulkResultModal.type === 'disable'
-                      ? '批量禁用结果'
+                      ? t('admin.bulkDisableResult')
                       : bulkResultModal.type === 'enable'
-                        ? '批量启用结果'
-                        : '批量删除结果'
+                        ? t('admin.bulkEnableResult')
+                        : t('admin.bulkDeleteResult')
                   }}
                 </h2>
                 <button
                   type="button"
                   class="rounded-md p-1 text-slate-400 transition hover:bg-zinc-100 hover:text-slate-700"
-                  aria-label="关闭"
+                  :aria-label="t('common.close')"
                   @click="closeBulkResultModal"
                 >
                   <X class="size-4" />
@@ -617,19 +642,19 @@ watch(hasSelection, (selected) => {
               <template v-if="bulkResultModal.type === 'disable'">
                 <dl class="grid grid-cols-3 gap-4 text-center">
                   <div class="rounded-lg bg-emerald-50 px-3 py-2">
-                    <dt class="text-xs text-emerald-700">已禁用</dt>
+                    <dt class="text-xs text-emerald-700">{{ t('admin.disabled') }}</dt>
                     <dd class="text-lg font-semibold text-emerald-900">
                       {{ bulkResultModal.data.disabled ?? 0 }}
                     </dd>
                   </div>
                   <div class="rounded-lg bg-amber-50 px-3 py-2">
-                    <dt class="text-xs text-amber-700">跳过</dt>
+                    <dt class="text-xs text-amber-700">{{ t('common.skipped') }}</dt>
                     <dd class="text-lg font-semibold text-amber-900">
                       {{ bulkResultModal.data.skipped ?? 0 }}
                     </dd>
                   </div>
                   <div class="rounded-lg bg-red-50 px-3 py-2">
-                    <dt class="text-xs text-red-700">错误</dt>
+                    <dt class="text-xs text-red-700">{{ t('common.errors') }}</dt>
                     <dd class="text-lg font-semibold text-red-900">
                       {{ bulkResultModal.data.errors?.length ?? 0 }}
                     </dd>
@@ -642,8 +667,8 @@ watch(hasSelection, (selected) => {
                   <table class="w-full text-left text-sm">
                     <thead>
                       <tr class="border-b border-slate-100 text-xs text-slate-500">
-                        <th class="pb-2 pr-4 font-medium">邮箱</th>
-                        <th class="pb-2 font-medium">原因</th>
+                        <th class="pb-2 pr-4 font-medium">{{ t('admin.colEmail') }}</th>
+                        <th class="pb-2 font-medium">{{ t('common.reason') }}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -663,19 +688,19 @@ watch(hasSelection, (selected) => {
               <template v-else-if="bulkResultModal.type === 'enable'">
                 <dl class="grid grid-cols-3 gap-4 text-center">
                   <div class="rounded-lg bg-emerald-50 px-3 py-2">
-                    <dt class="text-xs text-emerald-700">已启用</dt>
+                    <dt class="text-xs text-emerald-700">{{ t('admin.enabled') }}</dt>
                     <dd class="text-lg font-semibold text-emerald-900">
                       {{ bulkResultModal.data.enabled ?? 0 }}
                     </dd>
                   </div>
                   <div class="rounded-lg bg-amber-50 px-3 py-2">
-                    <dt class="text-xs text-amber-700">跳过</dt>
+                    <dt class="text-xs text-amber-700">{{ t('common.skipped') }}</dt>
                     <dd class="text-lg font-semibold text-amber-900">
                       {{ bulkResultModal.data.skipped ?? 0 }}
                     </dd>
                   </div>
                   <div class="rounded-lg bg-red-50 px-3 py-2">
-                    <dt class="text-xs text-red-700">错误</dt>
+                    <dt class="text-xs text-red-700">{{ t('common.errors') }}</dt>
                     <dd class="text-lg font-semibold text-red-900">
                       {{ bulkResultModal.data.errors?.length ?? 0 }}
                     </dd>
@@ -688,8 +713,8 @@ watch(hasSelection, (selected) => {
                   <table class="w-full text-left text-sm">
                     <thead>
                       <tr class="border-b border-slate-100 text-xs text-slate-500">
-                        <th class="pb-2 pr-4 font-medium">邮箱</th>
-                        <th class="pb-2 font-medium">原因</th>
+                        <th class="pb-2 pr-4 font-medium">{{ t('admin.colEmail') }}</th>
+                        <th class="pb-2 font-medium">{{ t('common.reason') }}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -709,25 +734,25 @@ watch(hasSelection, (selected) => {
               <template v-else>
                 <dl class="grid grid-cols-2 gap-4 text-center sm:grid-cols-4">
                   <div class="rounded-lg bg-emerald-50 px-3 py-2">
-                    <dt class="text-xs text-emerald-700">已删除</dt>
+                    <dt class="text-xs text-emerald-700">{{ t('admin.deleted') }}</dt>
                     <dd class="text-lg font-semibold text-emerald-900">
                       {{ bulkResultModal.data.deleted ?? 0 }}
                     </dd>
                   </div>
                   <div class="rounded-lg bg-blue-50 px-3 py-2">
-                    <dt class="text-xs text-blue-700">待撤销</dt>
+                    <dt class="text-xs text-blue-700">{{ t('admin.pendingRevoke') }}</dt>
                     <dd class="text-lg font-semibold text-blue-900">
                       {{ bulkResultModal.data.pending ?? 0 }}
                     </dd>
                   </div>
                   <div class="rounded-lg bg-amber-50 px-3 py-2">
-                    <dt class="text-xs text-amber-700">跳过</dt>
+                    <dt class="text-xs text-amber-700">{{ t('common.skipped') }}</dt>
                     <dd class="text-lg font-semibold text-amber-900">
                       {{ bulkResultModal.data.skipped ?? 0 }}
                     </dd>
                   </div>
                   <div class="rounded-lg bg-red-50 px-3 py-2">
-                    <dt class="text-xs text-red-700">错误</dt>
+                    <dt class="text-xs text-red-700">{{ t('common.errors') }}</dt>
                     <dd class="text-lg font-semibold text-red-900">
                       {{ bulkResultModal.data.errors?.length ?? 0 }}
                     </dd>
@@ -740,8 +765,8 @@ watch(hasSelection, (selected) => {
                   <table class="w-full text-left text-sm">
                     <thead>
                       <tr class="border-b border-slate-100 text-xs text-slate-500">
-                        <th class="pb-2 pr-4 font-medium">邮箱</th>
-                        <th class="pb-2 font-medium">原因</th>
+                        <th class="pb-2 pr-4 font-medium">{{ t('admin.colEmail') }}</th>
+                        <th class="pb-2 font-medium">{{ t('common.reason') }}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -764,7 +789,7 @@ watch(hasSelection, (selected) => {
                   class="h-9 rounded-md bg-slate-900 px-4 text-sm font-medium text-white transition hover:bg-slate-800"
                   @click="closeBulkResultModal"
                 >
-                  知道了
+                  {{ t('common.gotIt') }}
                 </button>
               </div>
             </div>

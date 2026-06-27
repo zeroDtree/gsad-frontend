@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const props = withDefaults(
   defineProps<{
@@ -17,6 +18,8 @@ const props = withDefaults(
 const emit = defineEmits<{
   'update:page': [page: number]
 }>()
+
+const { t } = useI18n()
 
 const totalPages = computed(() => Math.max(1, Math.ceil(props.total / props.pageSize)))
 const canGoPrev = computed(() => props.page > 1)
@@ -40,9 +43,9 @@ function onNext() {
     class="flex flex-col gap-3 border-t border-slate-100 bg-zinc-50/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
   >
     <p class="text-sm text-slate-500">
-      共 {{ total }} 条
+      {{ t('common.paginationTotal', { total }) }}
       <span v-if="totalPages > 1" class="text-slate-400">
-        · 第 {{ page }} / {{ totalPages }} 页
+        {{ t('common.paginationPage', { page, totalPages }) }}
       </span>
     </p>
     <div v-if="totalPages > 1" class="flex items-center gap-2">
@@ -52,7 +55,7 @@ function onNext() {
         :disabled="!canGoPrev || loading"
         @click="onPrev"
       >
-        上一页
+        {{ t('common.previousPage') }}
       </button>
       <button
         type="button"
@@ -60,7 +63,7 @@ function onNext() {
         :disabled="!canGoNext || loading"
         @click="onNext"
       >
-        下一页
+        {{ t('common.nextPage') }}
       </button>
     </div>
   </div>

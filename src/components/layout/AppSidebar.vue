@@ -1,33 +1,35 @@
 <script setup lang="ts">
 import { FilePlus2, LayoutGrid, Layers, LogIn, Server, Upload, Users } from 'lucide-vue-next'
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute } from 'vue-router'
 
 import UserStatusPanel from '@/components/layout/UserStatusPanel.vue'
 import { useAuthStore } from '@/stores/auth'
 
+const { t } = useI18n()
 const route = useRoute()
 const auth = useAuthStore()
 
-const mainNav = [
-  { to: '/board', label: '资源看板', nav: 'board' as const, icon: LayoutGrid },
-  { to: '/applications/new', label: '新建申请', nav: 'apply' as const, icon: FilePlus2 },
-  { to: '/applications/mine', label: '我的申请', nav: 'mine' as const, icon: Layers },
-]
+const mainNav = computed(() => [
+  { to: '/board', labelKey: 'nav.board', nav: 'board' as const, icon: LayoutGrid },
+  { to: '/applications/new', labelKey: 'nav.newApplication', nav: 'apply' as const, icon: FilePlus2 },
+  { to: '/applications/mine', labelKey: 'nav.myApplications', nav: 'mine' as const, icon: Layers },
+])
 
 const adminNav = computed(() =>
   auth.isAdmin
     ? [
-        { to: '/admin/users', label: '用户管理', nav: 'admin-users' as const, icon: Users },
+        { to: '/admin/users', labelKey: 'nav.adminUsers', nav: 'admin-users' as const, icon: Users },
         {
           to: '/admin/users/import',
-          label: '用户导入',
+          labelKey: 'nav.adminUserImport',
           nav: 'admin-import' as const,
           icon: Upload,
         },
         {
           to: '/admin/servers/import',
-          label: '服务器导入',
+          labelKey: 'nav.adminServerImport',
           nav: 'admin-servers-import' as const,
           icon: Server,
         },
@@ -57,16 +59,21 @@ function linkClass(nav: string) {
       >
         GSAD
       </p>
-      <p class="mt-0.5 text-sm font-semibold tracking-tight text-slate-900">资源控制台</p>
+      <p class="mt-0.5 text-sm font-semibold tracking-tight text-slate-900">
+        {{ t('nav.consoleTitle') }}
+      </p>
     </div>
 
-    <nav class="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 pb-4 pt-2" aria-label="主导航">
+    <nav
+      class="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 pb-4 pt-2"
+      :aria-label="t('nav.main')"
+    >
       <RouterLink v-if="!auth.isAuthenticated" to="/login" :class="linkClass('login')">
         <LogIn
           class="size-4 shrink-0 text-slate-400 transition group-hover:text-slate-600"
           :class="route.meta.nav === 'login' ? '!text-slate-700' : ''"
         />
-        登录
+        {{ t('nav.login') }}
       </RouterLink>
       <RouterLink v-for="item in mainNav" :key="item.to" :to="item.to" :class="linkClass(item.nav)">
         <component
@@ -74,14 +81,14 @@ function linkClass(nav: string) {
           class="size-4 shrink-0 text-slate-400 transition group-hover:text-slate-600"
           :class="route.meta.nav === item.nav ? '!text-slate-700' : ''"
         />
-        {{ item.label }}
+        {{ t(item.labelKey) }}
       </RouterLink>
 
       <template v-if="adminNav.length > 0">
         <p
           class="mb-1 mt-4 px-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400"
         >
-          管理
+          {{ t('nav.admin') }}
         </p>
         <RouterLink
           v-for="item in adminNav"
@@ -94,7 +101,7 @@ function linkClass(nav: string) {
             class="size-4 shrink-0 text-slate-400 transition group-hover:text-slate-600"
             :class="route.meta.nav === item.nav ? '!text-slate-700' : ''"
           />
-          {{ item.label }}
+          {{ t(item.labelKey) }}
         </RouterLink>
       </template>
     </nav>

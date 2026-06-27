@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { importServersCsv } from '@/api/admin'
 import type { ServerImportResponse } from '@/types/apiEnvelope'
 import { useUiStore } from '@/stores/ui'
 
+const { t } = useI18n()
 const ui = useUiStore()
 
 const selectedFile = ref<File | null>(null)
@@ -27,12 +29,16 @@ async function onSubmit() {
     if (errors.length === 0) {
       ui.pushToast({
         type: 'success',
-        message: `导入完成：新建 ${created}，跳过 ${skipped}`,
+        message: t('admin.importResultSummary', { created, skipped }),
       })
     } else {
       ui.pushToast({
         type: 'warning',
-        message: `导入完成：新建 ${created}，跳过 ${skipped}，${errors.length} 行错误`,
+        message: t('admin.importResultWithErrors', {
+          created,
+          skipped,
+          errors: errors.length,
+        }),
       })
     }
   } catch {
@@ -46,12 +52,18 @@ async function onSubmit() {
 <template>
   <div class="mx-auto max-w-2xl px-4 py-8">
     <header class="mb-8">
-      <h1 class="text-xl font-semibold tracking-tight text-slate-900">服务器导入</h1>
+      <h1 class="text-xl font-semibold tracking-tight text-slate-900">
+        {{ t('admin.serverImport') }}
+      </h1>
       <p class="mt-1 text-sm text-slate-600">
-        上传 CSV 注册 GPU 服务器。必填列：<code class="font-mono text-xs">server_id</code>。可选：
-        <code class="font-mono text-xs">ssh_host</code>、
-        <code class="font-mono text-xs">resource_level</code>。
-        <code class="font-mono text-xs">agent_psk</code> 列会被忽略（可与 PSK 批量脚本输出共用同一文件）。
+        {{
+          t('admin.serverImportDesc', {
+            serverId: 'server_id',
+            sshHost: 'ssh_host',
+            resourceLevel: 'resource_level',
+            agentPsk: 'agent_psk',
+          })
+        }}
       </p>
     </header>
 
@@ -60,9 +72,9 @@ async function onSubmit() {
       @submit.prevent="onSubmit"
     >
       <div>
-        <label class="mb-1.5 block text-xs font-medium text-slate-600" for="server-csv"
-          >CSV 文件</label
-        >
+        <label class="mb-1.5 block text-xs font-medium text-slate-600" for="server-csv">
+          {{ t('admin.csvFile') }}
+        </label>
         <input
           id="server-csv"
           type="file"
@@ -73,7 +85,7 @@ async function onSubmit() {
       </div>
 
       <div class="rounded-md border border-slate-100 bg-zinc-50/80 px-3 py-2.5 text-xs text-slate-600">
-        <p class="font-medium text-slate-700">示例</p>
+        <p class="font-medium text-slate-700">{{ t('common.example') }}</p>
         <pre class="mt-1 overflow-x-auto font-mono text-[11px] leading-relaxed">server_id,ssh_host
 gpu-node-01,10.0.0.11
 gpu-node-02,</pre>
@@ -84,22 +96,22 @@ gpu-node-02,</pre>
         class="inline-flex h-10 items-center justify-center rounded-md bg-slate-900 px-4 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
         :disabled="!selectedFile || submitting"
       >
-        {{ submitting ? '导入中…' : '开始导入' }}
+        {{ submitting ? t('admin.importing') : t('admin.startImport') }}
       </button>
     </form>
 
     <section v-if="result" class="mt-8 space-y-4">
       <div class="flex flex-wrap gap-4 text-sm">
         <p>
-          <span class="text-slate-500">新建</span>
+          <span class="text-slate-500">{{ t('common.created') }}</span>
           <span class="ml-1 font-semibold text-slate-900">{{ result.created }}</span>
         </p>
         <p>
-          <span class="text-slate-500">跳过</span>
+          <span class="text-slate-500">{{ t('common.skipped') }}</span>
           <span class="ml-1 font-semibold text-slate-900">{{ result.skipped }}</span>
         </p>
         <p>
-          <span class="text-slate-500">错误</span>
+          <span class="text-slate-500">{{ t('common.errors') }}</span>
           <span class="ml-1 font-semibold text-slate-900">{{ result.errors.length }}</span>
         </p>
       </div>
@@ -111,8 +123,8 @@ gpu-node-02,</pre>
         <table class="w-full min-w-[20rem] border-collapse text-left text-sm">
           <thead>
             <tr class="border-b border-slate-200 bg-zinc-50/90 text-xs font-medium text-slate-500">
-              <th class="px-3 py-2.5">行</th>
-              <th class="px-3 py-2.5">原因</th>
+              <th class="px-3 py-2.5">{{ t('common.row') }}</th>
+              <th class="px-3 py-2.5">{{ t('common.reason') }}</th>
             </tr>
           </thead>
           <tbody>

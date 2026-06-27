@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { AlertCircle, ServerCrash } from 'lucide-vue-next'
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import RefreshButton from '@/components/ui/RefreshButton.vue'
 
@@ -13,6 +14,7 @@ const emit = defineEmits<{
   refresh: []
 }>()
 
+const { t } = useI18n()
 const isError = computed(() => Boolean(props.errorMessage?.trim()))
 </script>
 
@@ -29,13 +31,13 @@ const isError = computed(() => Boolean(props.errorMessage?.trim()))
       <ServerCrash v-else class="size-6" />
     </div>
     <p class="mt-4 text-sm font-medium" :class="isError ? 'text-rose-950' : 'text-slate-800'">
-      {{ isError ? '无法加载看板' : '暂无可展示服务器' }}
+      {{ isError ? t('board.loadFailedTitle') : t('board.emptyTitle') }}
     </p>
     <p
       class="mt-1 max-w-sm text-xs leading-relaxed"
       :class="isError ? 'text-rose-900/90' : 'text-slate-500'"
     >
-      {{ isError ? errorMessage : '请确认后端已上报节点，或稍后重试刷新列表。' }}
+      {{ isError ? errorMessage : t('board.emptyHint') }}
     </p>
     <div class="mt-6">
       <RefreshButton

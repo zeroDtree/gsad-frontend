@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { Cpu } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 
 import { formatResourceLevel } from '@/api/public'
-import { SERVER_STATUS_DOT_CLASS, SERVER_STATUS_LABEL } from '@/constants/serverPresence'
+import { SERVER_STATUS_DOT_CLASS, SERVER_STATUS_LABEL_KEY } from '@/constants/serverPresence'
 import { formatMemMb, formatUtil, memUseRatio } from '@/lib/boardFormat'
 import { formatLocalDateTime, formatRelativeFromUtc, isReportStale } from '@/lib/dayjs'
 import type { PublicServerItem } from '@/types/public'
@@ -13,6 +14,7 @@ defineProps<{
   embedded?: boolean
 }>()
 
+const { t } = useI18n()
 const COL_COUNT = 8
 </script>
 
@@ -24,14 +26,14 @@ const COL_COUNT = 8
     <table class="w-full min-w-[720px] border-collapse text-left text-sm">
       <thead>
         <tr class="border-b border-slate-200 bg-zinc-50/90 text-xs font-medium text-slate-500">
-          <th class="w-12 px-3 py-2.5">状态</th>
-          <th class="min-w-[10rem] px-3 py-2.5">服务器 ID</th>
-          <th class="px-3 py-2.5">资源等级</th>
-          <th class="whitespace-nowrap px-3 py-2.5">GPU 数</th>
-          <th class="whitespace-nowrap px-3 py-2.5">平均利用率</th>
-          <th class="whitespace-nowrap px-3 py-2.5">平均显存</th>
-          <th class="min-w-[8rem] px-3 py-2.5">时间</th>
-          <th class="w-28 px-3 py-2.5 text-right">操作</th>
+          <th class="w-12 px-3 py-2.5">{{ t('board.colStatus') }}</th>
+          <th class="min-w-[10rem] px-3 py-2.5">{{ t('board.colServerId') }}</th>
+          <th class="px-3 py-2.5">{{ t('board.colResourceLevel') }}</th>
+          <th class="whitespace-nowrap px-3 py-2.5">{{ t('board.colGpuCount') }}</th>
+          <th class="whitespace-nowrap px-3 py-2.5">{{ t('board.colAvgUtil') }}</th>
+          <th class="whitespace-nowrap px-3 py-2.5">{{ t('board.colAvgMem') }}</th>
+          <th class="min-w-[8rem] px-3 py-2.5">{{ t('board.colTime') }}</th>
+          <th class="w-28 px-3 py-2.5 text-right">{{ t('board.colActions') }}</th>
         </tr>
       </thead>
       <tbody
@@ -51,7 +53,7 @@ const COL_COUNT = 8
                   SERVER_STATUS_DOT_CLASS[server.status],
                   server.status === 'ONLINE' ? 'motion-safe:animate-pulse' : '',
                 ]"
-                :title="SERVER_STATUS_LABEL[server.status]"
+                :title="t(SERVER_STATUS_LABEL_KEY[server.status])"
                 aria-hidden="true"
               />
             </div>
@@ -68,7 +70,7 @@ const COL_COUNT = 8
                 v-if="isReportStale(server.lastReportedAt)"
                 class="w-fit rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-900"
               >
-                数据可能过期
+                {{ t('board.dataStale') }}
               </span>
             </div>
           </td>
@@ -92,14 +94,14 @@ const COL_COUNT = 8
           <td class="px-3 py-3 align-middle text-xs text-slate-600">
             <div class="space-y-1">
               <p class="leading-snug">
-                <span class="text-slate-400">采集 </span>
+                <span class="text-slate-400">{{ t('board.collectedAt') }} </span>
                 <template v-if="server.collectedAt">
                   {{ formatRelativeFromUtc(server.collectedAt) }}
                 </template>
                 <span v-else class="text-slate-400">—</span>
               </p>
               <p class="leading-snug">
-                <span class="text-slate-400">上报 </span>
+                <span class="text-slate-400">{{ t('board.reportedAt') }} </span>
                 <template v-if="server.lastReportedAt">
                   {{ formatRelativeFromUtc(server.lastReportedAt) }}
                 </template>
@@ -112,7 +114,7 @@ const COL_COUNT = 8
               :to="{ path: '/applications/new', query: { serverId: server.id } }"
               class="inline-flex h-8 items-center justify-center rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-800 transition hover:bg-zinc-50"
             >
-              申请此机
+              {{ t('board.applyThisServer') }}
             </RouterLink>
           </td>
         </tr>
@@ -125,11 +127,11 @@ const COL_COUNT = 8
               <table class="w-full min-w-[280px] border-collapse text-left text-[11px]">
                 <thead>
                   <tr class="border-b border-slate-100 bg-zinc-50/90 text-slate-500">
-                    <th class="px-2 py-1.5 font-medium">#</th>
-                    <th class="px-2 py-1.5 font-medium">型号</th>
-                    <th class="px-2 py-1.5 font-medium">利用率</th>
-                    <th class="px-2 py-1.5 font-medium">显存</th>
-                    <th class="px-2 py-1.5 font-medium">占用比</th>
+                    <th class="px-2 py-1.5 font-medium">{{ t('board.gpuIndex') }}</th>
+                    <th class="px-2 py-1.5 font-medium">{{ t('board.gpuModel') }}</th>
+                    <th class="px-2 py-1.5 font-medium">{{ t('board.gpuUtil') }}</th>
+                    <th class="px-2 py-1.5 font-medium">{{ t('board.gpuMem') }}</th>
+                    <th class="px-2 py-1.5 font-medium">{{ t('board.gpuMemRatio') }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -156,7 +158,7 @@ const COL_COUNT = 8
             <dl class="mt-3 grid gap-2 text-xs sm:grid-cols-2">
               <div class="rounded-lg border border-slate-100 bg-white px-2.5 py-2">
                 <dt class="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                  采集时间（Agent）
+                  {{ t('board.collectedAtAgent') }}
                 </dt>
                 <dd class="mt-1 text-sm text-slate-800">
                   <template v-if="server.collectedAt">
@@ -170,7 +172,7 @@ const COL_COUNT = 8
               </div>
               <div class="rounded-lg border border-slate-100 bg-white px-2.5 py-2">
                 <dt class="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                  最近上报（服务端）
+                  {{ t('board.lastReportedServer') }}
                 </dt>
                 <dd class="mt-1 text-sm text-slate-800">
                   <template v-if="server.lastReportedAt">

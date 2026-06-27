@@ -2,6 +2,7 @@
 import { useIntervalFn } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 
 import ApplicationDetailDrawer from '@/components/application/ApplicationDetailDrawer.vue'
@@ -13,6 +14,7 @@ import { formatRelativeFromUtc } from '@/lib/dayjs'
 import { useApplicationsStore } from '@/stores/applications'
 import type { ApplicationItem, AuditStatus } from '@/types/application'
 
+const { t } = useI18n()
 const route = useRoute()
 const store = useApplicationsStore()
 const { items, loading, errorMessage, filterStatus, highlightId, page, total, page_size } =
@@ -25,13 +27,13 @@ const selectedApp = computed(() => {
   return items.value.find((i) => i.id === selectedAppId.value) ?? null
 })
 
-const STATUS_OPTIONS: Array<{ value: AuditStatus | 'all'; label: string }> = [
-  { value: 'all', label: '全部状态' },
+const STATUS_OPTIONS = computed(() => [
+  { value: 'all' as const, label: t('common.allStatus') },
   ...Object.entries(AUDIT_STATUS_MAP).map(([k, v]) => ({
     value: k as AuditStatus,
-    label: v.label,
+    label: t(v.labelKey),
   })),
-]
+])
 
 function openDrawer(app: ApplicationItem) {
   selectedAppId.value = app.id
@@ -55,7 +57,6 @@ function onPageChange(next: number) {
   store.setPage(next)
 }
 
-// Highlight newly created record for 3 s
 function applyHighlight() {
   const id = (route.query.highlight as string) || null
   if (id) {
@@ -64,7 +65,6 @@ function applyHighlight() {
   }
 }
 
-// Polling
 const { pause, resume } = useIntervalFn(
   () => void store.fetchMine({ silent: true }),
   () => store.pollIntervalMs,
@@ -95,15 +95,16 @@ watch(items, () => {
       <header class="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-            申请管理
+            {{ t('application.manageEyebrow') }}
           </p>
-          <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">我的申请</h1>
+          <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
+            {{ t('application.myTitle') }}
+          </h1>
           <p class="mt-2 text-sm text-slate-500">
-            查看授权与资源状态，每 {{ Math.round(store.pollIntervalMs / 1000) }} 秒自动刷新。
+            {{ t('application.myDescription', { seconds: Math.round(store.pollIntervalMs / 1000) }) }}
           </p>
         </div>
         <div class="flex items-center gap-2">
-          <!-- Status filter -->
           <select
             v-model="filterStatus"
             class="h-9 min-w-[9rem] rounded-md border border-slate-200 bg-white px-2.5 text-sm text-slate-800 shadow-sm outline-none ring-slate-300 transition focus:ring-2"
@@ -117,16 +118,19 @@ watch(items, () => {
         </div>
       </header>
 
-      <!-- Error -->
       <div
         v-if="errorMessage"
         class="mb-4 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
       >
         <span class="flex-1">{{ errorMessage }}</span>
-        <RefreshButton variant="text" label="重试" :loading="loading" @click="onRefresh" />
+        <RefreshButton
+          variant="text"
+          :label="t('common.retry')"
+          :loading="loading"
+          @click="onRefresh"
+        />
       </div>
 
-      <!-- Skeleton -->
       <div v-if="loading && items.length === 0" class="space-y-2">
         <div
           v-for="i in 4"
@@ -135,13 +139,16 @@ watch(items, () => {
         />
       </div>
 
-      <!-- Empty state -->
       <div
         v-else-if="!loading && items.length === 0"
         class="rounded-xl border border-dashed border-slate-200 bg-zinc-50/60 px-6 py-14 text-center"
       >
         <p class="text-sm text-slate-500">
-          {{ filterStatus !== 'all' ? '当前筛选条件下暂无申请' : '暂无申请记录' }}
+          {{
+            filterStatus !== 'all'
+              ? t('application.noApplicationsFiltered')
+              : t('application.noApplications')
+          }}
         </p>
         <button
           v-if="filterStatus !== 'all'"
@@ -149,21 +156,28 @@ watch(items, () => {
           class="mt-3 text-sm font-medium text-slate-900 underline-offset-2 hover:underline"
           @click="filterStatus = 'all'"
         >
-          重置筛选
+          {{ t('common.resetFilters') }}
         </button>
       </div>
 
-      <!-- Table -->
       <div v-else class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <table class="w-full text-sm">
           <thead>
             <tr
               class="border-b border-slate-100 bg-zinc-50/80 text-xs font-medium uppercase tracking-wide text-slate-500"
             >
-              <th class="whitespace-nowrap px-4 py-3 text-left">申请 ID</th>
-              <th class="whitespace-nowrap px-4 py-3 text-left">服务器 ID</th>
-              <th class="whitespace-nowrap px-4 py-3 text-left">状态</th>
-              <th class="hidden whitespace-nowrap px-4 py-3 text-left xl:table-cell">更新时间</th>
+              <th class="whitespace-nowrap px-4 py-3 text-left">
+                {{ t('application.colApplicationId') }}
+              </th>
+              <th class="whitespace-nowrap px-4 py-3 text-left">
+                {{ t('application.colServerId') }}
+              </th>
+              <th class="whitespace-nowrap px-4 py-3 text-left">
+                {{ t('application.colStatus') }}
+              </th>
+              <th class="hidden whitespace-nowrap px-4 py-3 text-left xl:table-cell">
+                {{ t('application.colUpdatedAt') }}
+              </th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">

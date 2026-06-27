@@ -2,7 +2,13 @@
 
 import axios, { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios'
 
-import { BusinessCode, DEFAULT_MESSAGES, getApiMessage, getBusinessCode } from '@/api/errors'
+import {
+  BusinessCode,
+  getBusinessCode,
+  getLocalizedError,
+  getLocalizedErrorForCode,
+} from '@/api/errors'
+import { t } from '@/i18n/t'
 
 declare module 'axios' {
   interface InternalAxiosRequestConfig {
@@ -122,7 +128,7 @@ http.interceptors.response.use(
   (response) => {
     const body = response.data
     if (shouldRejectBusinessEnvelope(body)) {
-      const message = getApiMessage(body, '请求失败')
+      const message = getLocalizedError(body)
       return rejectBusinessError(response, body, message)
     }
     return response
@@ -148,7 +154,7 @@ http.interceptors.response.use(
       await clearAuthFromInterceptor()
       await toastFromInterceptor({
         type: 'error',
-        message: getApiMessage(payload, DEFAULT_MESSAGES[BusinessCode.UNAUTHORIZED]),
+        message: getLocalizedErrorForCode(BusinessCode.UNAUTHORIZED),
       })
       const { router } = await import('@/router')
       const cur = router.currentRoute.value
@@ -158,42 +164,42 @@ http.interceptors.response.use(
     } else if (status === 403 || biz === BusinessCode.FORBIDDEN) {
       await toastFromInterceptor({
         type: 'warning',
-        message: getApiMessage(payload, DEFAULT_MESSAGES[BusinessCode.FORBIDDEN]),
+        message: getLocalizedErrorForCode(BusinessCode.FORBIDDEN),
       })
     } else if (status === 404 || biz === BusinessCode.NOT_FOUND) {
       await toastFromInterceptor({
         type: 'warning',
-        message: getApiMessage(payload, DEFAULT_MESSAGES[BusinessCode.NOT_FOUND]),
+        message: getLocalizedErrorForCode(BusinessCode.NOT_FOUND),
       })
     } else if (status === 409 || biz === BusinessCode.STATE_CONFLICT) {
       await toastFromInterceptor({
         type: 'warning',
-        message: getApiMessage(payload, DEFAULT_MESSAGES[BusinessCode.STATE_CONFLICT]),
+        message: getLocalizedErrorForCode(BusinessCode.STATE_CONFLICT),
       })
     } else if (status === 400 || biz === BusinessCode.INVALID_ARGUMENT) {
       await toastFromInterceptor({
         type: 'warning',
-        message: getApiMessage(payload, DEFAULT_MESSAGES[BusinessCode.INVALID_ARGUMENT]),
+        message: getLocalizedErrorForCode(BusinessCode.INVALID_ARGUMENT),
       })
     } else if (status === 429 || biz === BusinessCode.RATE_LIMITED) {
       await toastFromInterceptor({
         type: 'warning',
-        message: getApiMessage(payload, DEFAULT_MESSAGES[BusinessCode.RATE_LIMITED]),
+        message: getLocalizedErrorForCode(BusinessCode.RATE_LIMITED),
       })
     } else if (status === 500 || biz === BusinessCode.INTERNAL_ERROR) {
       await toastFromInterceptor({
         type: 'error',
-        message: getApiMessage(payload, DEFAULT_MESSAGES[BusinessCode.INTERNAL_ERROR]),
+        message: getLocalizedErrorForCode(BusinessCode.INTERNAL_ERROR),
       })
     } else if (error.response) {
       await toastFromInterceptor({
         type: 'error',
-        message: getApiMessage(payload, error.message || '请求失败'),
+        message: getLocalizedError(payload),
       })
     } else {
       await toastFromInterceptor({
         type: 'error',
-        message: '网络异常，请检查连接后重试',
+        message: t('errors.networkError'),
       })
     }
 

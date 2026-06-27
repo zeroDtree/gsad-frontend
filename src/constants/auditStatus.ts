@@ -2,19 +2,19 @@ import type { AuditStatus } from '@/types/application'
 
 /** Tailwind color token names — resolved to real classes in AuditStatusBadge */
 type StatusMeta = {
-  label: string
+  labelKey: string
   color: 'blue' | 'cyan' | 'success' | 'gray' | 'error' | 'warning'
   icon: string
 }
 
 export const AUDIT_STATUS_MAP: Record<AuditStatus, StatusMeta> = {
-  APPROVED: { label: '授权处理中', color: 'cyan', icon: 'Zap' },
-  ACTIVE: { label: '已生效', color: 'success', icon: 'CheckCircle' },
-  REVOKING: { label: '回收中', color: 'blue', icon: 'Clock' },
-  REVOKED: { label: '已撤销', color: 'gray', icon: 'CheckCircle' },
-  CANCELLED: { label: '已取消', color: 'gray', icon: 'XCircle' },
-  FAILED_GRANT: { label: '授权失败', color: 'error', icon: 'XCircle' },
-  FAILED_REVOKE: { label: '回收失败', color: 'warning', icon: 'AlertTriangle' },
+  APPROVED: { labelKey: 'auditStatus.APPROVED', color: 'cyan', icon: 'Zap' },
+  ACTIVE: { labelKey: 'auditStatus.ACTIVE', color: 'success', icon: 'CheckCircle' },
+  REVOKING: { labelKey: 'auditStatus.REVOKING', color: 'blue', icon: 'Clock' },
+  REVOKED: { labelKey: 'auditStatus.REVOKED', color: 'gray', icon: 'CheckCircle' },
+  CANCELLED: { labelKey: 'auditStatus.CANCELLED', color: 'gray', icon: 'XCircle' },
+  FAILED_GRANT: { labelKey: 'auditStatus.FAILED_GRANT', color: 'error', icon: 'XCircle' },
+  FAILED_REVOKE: { labelKey: 'auditStatus.FAILED_REVOKE', color: 'warning', icon: 'AlertTriangle' },
 }
 
 export const STATUS_COLOR_CLASS: Record<StatusMeta['color'], string> = {

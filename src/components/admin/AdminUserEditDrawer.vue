@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Trash2, X } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { deleteAdminUser, resetAdminUserPassword, updateAdminUser } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
@@ -16,6 +17,7 @@ const emit = defineEmits<{
   deleted: []
 }>()
 
+const { t } = useI18n()
 const ui = useUiStore()
 
 const isOpen = computed(() => props.user !== null)
@@ -71,9 +73,9 @@ const isAdminAccount = computed(
 const deleteWarning = computed(() => {
   if (activeAccessCount.value <= 0) return null
   if (revokeSsh.value) {
-    return `该用户有 ${activeAccessCount.value} 个活跃/撤销中的 GPU 访问，勾选后将发起服务器账号回收。`
+    return t('admin.userDeleteWarningWithRevoke', { count: activeAccessCount.value })
   }
-  return `该用户有 ${activeAccessCount.value} 个活跃 GPU 访问；不勾选时服务器 SSH 账号将保留。`
+  return t('admin.userDeleteWarningNoRevoke', { count: activeAccessCount.value })
 })
 
 function handleBackdrop(e: MouseEvent) {
@@ -94,7 +96,7 @@ async function onSave() {
       status: status.value,
     }
     const updated = await updateAdminUser(user.id, body)
-    ui.pushToast({ type: 'success', message: '用户已更新' })
+    ui.pushToast({ type: 'success', message: t('admin.userUpdated') })
     emit('updated', updated)
   } catch {
     // http interceptor shows error toast
@@ -110,22 +112,22 @@ async function onResetPassword() {
   resetPasswordError.value = ''
   const pwd = resetNewPassword.value
   if (pwd.length < MIN_PASSWORD_LEN) {
-    resetPasswordError.value = `密码至少 ${MIN_PASSWORD_LEN} 位`
+    resetPasswordError.value = t('validation.passwordMinLength', { min: MIN_PASSWORD_LEN })
     return
   }
   if (pwd.length > MAX_PASSWORD_LEN) {
-    resetPasswordError.value = `密码不得超过 ${MAX_PASSWORD_LEN} 位`
+    resetPasswordError.value = t('validation.passwordMaxLength', { max: MAX_PASSWORD_LEN })
     return
   }
   if (pwd !== resetConfirmPassword.value) {
-    resetPasswordError.value = '两次输入的密码不一致'
+    resetPasswordError.value = t('validation.passwordMismatch')
     return
   }
 
   resettingPassword.value = true
   try {
     await resetAdminUserPassword(user.id, { newPassword: pwd })
-    ui.pushToast({ type: 'success', message: '登录密码已重置' })
+    ui.pushToast({ type: 'success', message: t('admin.passwordReset') })
     resetNewPassword.value = ''
     resetConfirmPassword.value = ''
   } catch {
@@ -143,14 +145,14 @@ async function onDelete() {
   try {
     const result = await deleteAdminUser(user.id, revokeSsh.value)
     if (result.deleted) {
-      ui.pushToast({ type: 'success', message: '用户已删除' })
+      ui.pushToast({ type: 'success', message: t('admin.userDeleted') })
       emit('deleted')
       emit('close')
       return
     }
     ui.pushToast({
       type: 'warning',
-      message: `已发起撤销（${result.pendingRevokes} 个待完成），请稍后重试删除`,
+      message: t('admin.revokePendingRetry', { count: result.pendingRevokes }),
     })
     showDeleteConfirm.value = false
   } catch {
@@ -181,14 +183,14 @@ async function onDelete() {
             <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
               <div>
                 <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-                  用户详情
+                  {{ t('admin.userDetail') }}
                 </p>
                 <p class="mt-0.5 text-sm font-semibold text-slate-800">{{ user.email }}</p>
               </div>
               <button
                 type="button"
                 class="rounded-md p-1.5 text-slate-400 transition hover:bg-zinc-100 hover:text-slate-700"
-                aria-label="关闭"
+                :aria-label="t('common.close')"
                 @click="emit('close')"
               >
                 <X class="size-4" />
@@ -197,21 +199,23 @@ async function onDelete() {
 
             <form class="flex-1 space-y-4 px-6 py-5" @submit.prevent="onSave">
               <div>
-                <p class="mb-1 text-xs font-medium text-slate-500">邮箱</p>
+                <p class="mb-1 text-xs font-medium text-slate-500">{{ t('admin.colEmail') }}</p>
                 <p class="text-sm text-slate-800">{{ user.email }}</p>
               </div>
               <div>
-                <p class="mb-1 text-xs font-medium text-slate-500">Linux 用户名</p>
+                <p class="mb-1 text-xs font-medium text-slate-500">
+                  {{ t('admin.colLinuxUsername') }}
+                </p>
                 <p class="font-mono text-sm text-slate-800">{{ user.linuxUsername }}</p>
               </div>
               <div v-if="user.studentId">
-                <p class="mb-1 text-xs font-medium text-slate-500">学号</p>
+                <p class="mb-1 text-xs font-medium text-slate-500">{{ t('admin.studentId') }}</p>
                 <p class="text-sm text-slate-800">{{ user.studentId }}</p>
               </div>
 
               <div>
                 <label class="mb-1 block text-xs font-medium text-slate-500" for="u-display-name">
-                  姓名
+                  {{ t('admin.name') }}
                 </label>
                 <input
                   id="u-display-name"
@@ -222,7 +226,7 @@ async function onDelete() {
               </div>
               <div>
                 <label class="mb-1 block text-xs font-medium text-slate-500" for="u-cohort">
-                  届别
+                  {{ t('admin.cohort') }}
                 </label>
                 <input
                   id="u-cohort"
@@ -233,7 +237,7 @@ async function onDelete() {
               </div>
               <div>
                 <label class="mb-1 block text-xs font-medium text-slate-500" for="u-label">
-                  标签
+                  {{ t('admin.tags') }}
                 </label>
                 <input
                   id="u-label"
@@ -244,7 +248,7 @@ async function onDelete() {
               </div>
               <div>
                 <label class="mb-1 block text-xs font-medium text-slate-500" for="u-notes">
-                  备注
+                  {{ t('admin.notes') }}
                 </label>
                 <textarea
                   id="u-notes"
@@ -255,7 +259,7 @@ async function onDelete() {
               </div>
               <div>
                 <label class="mb-1 block text-xs font-medium text-slate-500" for="u-status">
-                  状态
+                  {{ t('common.status') }}
                 </label>
                 <select
                   v-if="!isAdminAccount"
@@ -263,12 +267,12 @@ async function onDelete() {
                   v-model="status"
                   class="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none ring-slate-300 focus:ring-2"
                 >
-                  <option value="ACTIVE">启用</option>
-                  <option value="INACTIVE">禁用</option>
+                  <option value="ACTIVE">{{ t('admin.statusActive') }}</option>
+                  <option value="INACTIVE">{{ t('admin.statusInactive') }}</option>
                 </select>
-                <p v-else class="text-sm text-slate-800">启用</p>
+                <p v-else class="text-sm text-slate-800">{{ t('admin.statusActive') }}</p>
                 <p v-if="isAdminAccount" class="mt-1 text-xs text-slate-500">
-                  管理员账号不可禁用或删除
+                  {{ t('admin.adminCannotDisable') }}
                 </p>
               </div>
 
@@ -278,19 +282,19 @@ async function onDelete() {
                   class="h-10 flex-1 rounded-md bg-slate-900 px-4 text-sm font-medium text-white transition hover:bg-slate-800 disabled:opacity-60"
                   :disabled="saving"
                 >
-                  {{ saving ? '保存中…' : '保存' }}
+                  {{ saving ? t('admin.saving') : t('common.save') }}
                 </button>
               </div>
             </form>
 
             <div v-if="!isAdminAccount" class="border-t border-slate-100 px-6 py-4">
               <p class="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">
-                重置登录密码
+                {{ t('admin.resetLoginPassword') }}
               </p>
               <div class="space-y-3">
                 <div>
                   <label class="mb-1 block text-xs font-medium text-slate-500" for="u-reset-pwd">
-                    新密码
+                    {{ t('auth.newPassword') }}
                   </label>
                   <div class="relative">
                     <input
@@ -303,16 +307,18 @@ async function onDelete() {
                     <button
                       type="button"
                       class="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 hover:text-slate-600"
-                      :aria-label="resetPasswordVisible ? '隐藏密码' : '显示密码'"
+                      :aria-label="
+                        resetPasswordVisible ? t('common.hidePassword') : t('common.showPassword')
+                      "
                       @click="resetPasswordVisible = !resetPasswordVisible"
                     >
-                      {{ resetPasswordVisible ? '隐藏' : '显示' }}
+                      {{ resetPasswordVisible ? t('common.hide') : t('common.show') }}
                     </button>
                   </div>
                 </div>
                 <div>
                   <label class="mb-1 block text-xs font-medium text-slate-500" for="u-reset-confirm">
-                    确认新密码
+                    {{ t('auth.confirmPassword') }}
                   </label>
                   <div class="relative">
                     <input
@@ -325,10 +331,12 @@ async function onDelete() {
                     <button
                       type="button"
                       class="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 hover:text-slate-600"
-                      :aria-label="resetConfirmVisible ? '隐藏密码' : '显示密码'"
+                      :aria-label="
+                        resetConfirmVisible ? t('common.hidePassword') : t('common.showPassword')
+                      "
                       @click="resetConfirmVisible = !resetConfirmVisible"
                     >
-                      {{ resetConfirmVisible ? '隐藏' : '显示' }}
+                      {{ resetConfirmVisible ? t('common.hide') : t('common.show') }}
                     </button>
                   </div>
                 </div>
@@ -339,7 +347,7 @@ async function onDelete() {
                   :disabled="resettingPassword || !resetNewPassword || !resetConfirmPassword"
                   @click="onResetPassword"
                 >
-                  {{ resettingPassword ? '重置中…' : '重置密码' }}
+                  {{ resettingPassword ? t('admin.resettingPassword') : t('admin.resetPassword') }}
                 </button>
               </div>
             </div>
@@ -352,13 +360,13 @@ async function onDelete() {
                   @click="showDeleteConfirm = true"
                 >
                   <Trash2 class="size-4" />
-                  删除账号
+                  {{ t('admin.deleteAccount') }}
                 </button>
               </div>
               <div v-else class="space-y-3 rounded-lg border border-red-200 bg-red-50/60 p-4">
-                <p class="text-sm font-medium text-red-900">确认删除 GSAD 账号？</p>
+                <p class="text-sm font-medium text-red-900">{{ t('admin.confirmDeleteAccount') }}</p>
                 <p class="text-xs leading-relaxed text-red-800/90">
-                  此操作不可恢复。关联的申请记录将一并删除。
+                  {{ t('admin.deleteWarning') }}
                 </p>
                 <label class="flex cursor-pointer items-start gap-2 text-sm text-red-900">
                   <input
@@ -366,7 +374,7 @@ async function onDelete() {
                     type="checkbox"
                     class="mt-0.5 size-4 rounded border-red-300"
                   />
-                  <span>同时撤销并删除服务器上的 SSH/GPU 账号</span>
+                  <span>{{ t('admin.revokeSshOnDelete') }}</span>
                 </label>
                 <p v-if="deleteWarning" class="text-xs leading-relaxed text-amber-800">
                   {{ deleteWarning }}
@@ -378,7 +386,7 @@ async function onDelete() {
                     :disabled="deleting"
                     @click="showDeleteConfirm = false"
                   >
-                    取消
+                    {{ t('common.cancel') }}
                   </button>
                   <button
                     type="button"
@@ -386,7 +394,7 @@ async function onDelete() {
                     :disabled="deleting"
                     @click="onDelete"
                   >
-                    {{ deleting ? '处理中…' : '确认删除' }}
+                    {{ deleting ? t('common.processing') : t('admin.confirmDelete') }}
                   </button>
                 </div>
               </div>

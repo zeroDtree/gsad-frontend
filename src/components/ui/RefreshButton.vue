@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RefreshCw } from 'lucide-vue-next'
 import { computed, onUnmounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const MIN_SPIN_MS = 300
 
@@ -14,7 +15,6 @@ const props = withDefaults(
   }>(),
   {
     loading: false,
-    label: '刷新',
     variant: 'toolbar',
     tone: 'default',
     disabled: false,
@@ -25,12 +25,14 @@ const emit = defineEmits<{
   click: []
 }>()
 
+const { t } = useI18n()
+
 const spinning = ref(false)
 let spinStartedAt = 0
 let spinTimer: ReturnType<typeof setTimeout> | undefined
 
+const displayLabel = computed(() => props.label ?? t('common.refresh'))
 const isDisabled = computed(() => props.disabled)
-
 const isBusy = computed(() => props.loading || spinning.value)
 
 const buttonClass = computed(() => {
@@ -104,6 +106,6 @@ function onClick() {
     <span class="inline-flex" :class="spinning ? 'animate-spin' : ''">
       <RefreshCw :class="iconSize" />
     </span>
-    {{ label }}
+    {{ displayLabel }}
   </button>
 </template>

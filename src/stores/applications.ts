@@ -2,7 +2,8 @@ import { isAxiosError } from 'axios'
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 
-import { getApiMessage } from '@/api/errors'
+import { getLocalizedError } from '@/api/errors'
+import { t } from '@/i18n/t'
 import {
   createApplication as apiCreate,
   getMyApplications,
@@ -61,9 +62,7 @@ export const useApplicationsStore = defineStore('applications', () => {
       page_size.value = result.page_size
     } catch (e) {
       if (seq !== fetchSeq) return
-      const msg = isAxiosError(e)
-        ? getApiMessage(e.response?.data, e.message || '加载失败')
-        : '加载失败'
+      const msg = isAxiosError(e) ? getLocalizedError(e.response?.data) : t('common.loadFailed')
       errorMessage.value = msg
     } finally {
       if (!silent) loading.value = false

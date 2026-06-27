@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Eye, EyeOff } from 'lucide-vue-next'
 import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
 import { useUiStore } from '@/stores/ui'
@@ -8,6 +9,7 @@ import { formatResourceLevel } from '@/api/public'
 import { useApplicationsStore } from '@/stores/applications'
 import { useBoardStore } from '@/stores/board'
 
+const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const ui = useUiStore()
@@ -54,17 +56,17 @@ function validate(): boolean {
   errors.value = { serverId: '', sshPassword: '' }
 
   if (!serverId.value) {
-    errors.value.serverId = '请选择目标服务器'
+    errors.value.serverId = t('validation.selectServer')
     ok = false
   }
 
   const pwd = sshPassword.value.trim()
   if (pwd) {
     if (pwd.length < MIN_SSH_PASSWORD_LEN) {
-      errors.value.sshPassword = `密码至少 ${MIN_SSH_PASSWORD_LEN} 位`
+      errors.value.sshPassword = t('validation.passwordMinLength', { min: MIN_SSH_PASSWORD_LEN })
       ok = false
     } else if (pwd.length > MAX_SSH_PASSWORD_LEN) {
-      errors.value.sshPassword = `密码不得超过 ${MAX_SSH_PASSWORD_LEN} 位`
+      errors.value.sshPassword = t('validation.passwordMaxLength', { max: MAX_SSH_PASSWORD_LEN })
       ok = false
     }
   }
@@ -84,7 +86,7 @@ async function onSubmit() {
       ...(sshPasswordTrimmed ? { ssh_password: sshPasswordTrimmed } : {}),
     })
 
-    ui.pushToast({ type: 'success', message: '申请已提交' })
+    ui.pushToast({ type: 'success', message: t('application.submitted') })
     appStore.setHighlight(newId)
     await router.replace({ path: '/applications/mine', query: { highlight: newId } })
   } catch {
@@ -99,11 +101,13 @@ async function onSubmit() {
   <div class="mx-auto max-w-2xl px-6 py-8 lg:px-10 lg:py-10">
     <header class="mb-8">
       <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-        申请 GPU 资源
+        {{ t('application.eyebrow') }}
       </p>
-      <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">新建申请</h1>
+      <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
+        {{ t('application.newTitle') }}
+      </h1>
       <p class="mt-2 max-w-lg text-sm leading-relaxed text-slate-500">
-        选择目标服务器后提交，系统将发起访问授权。访问生效后可在「我的申请」中随时撤销。
+        {{ t('application.newDescription') }}
       </p>
     </header>
 
@@ -113,7 +117,7 @@ async function onSubmit() {
     >
       <div>
         <label class="mb-1.5 block text-sm font-medium text-slate-700" for="f-server-id">
-          目标服务器 <span class="text-red-500">*</span>
+          {{ t('application.targetServer') }} <span class="text-red-500">*</span>
         </label>
         <div v-if="serversLoading" class="h-10 animate-pulse rounded-md bg-zinc-100" />
         <select
@@ -125,14 +129,18 @@ async function onSubmit() {
           :disabled="sortedServers.length === 0"
         >
           <option value="" disabled>
-            {{ sortedServers.length === 0 ? '暂无可选节点（请确认看板有上报数据）' : '请选择…' }}
+            {{
+              sortedServers.length === 0
+                ? t('application.noServersAvailable')
+                : t('application.selectPlaceholder')
+            }}
           </option>
           <option v-for="s in sortedServers" :key="s.id" :value="s.id">
             {{ s.id }} · {{ formatResourceLevel(s.resourceLevel) }} · {{ s.status }}
           </option>
         </select>
         <p v-if="boardStore.errorMessage" class="mt-1 text-xs text-amber-700">
-          节点列表加载失败：{{ boardStore.errorMessage }}。仍可填写其他项后重试刷新页面。
+          {{ t('board.serverListLoadFailed', { message: boardStore.errorMessage }) }}
         </p>
         <p v-else-if="errors.serverId" class="mt-1 text-xs text-red-600">
           {{ errors.serverId }}
@@ -141,7 +149,7 @@ async function onSubmit() {
 
       <div>
         <label class="mb-1.5 block text-sm font-medium text-slate-700" for="f-ssh-password">
-          SSH 登录密码（可选）
+          {{ t('application.sshPasswordOptional') }}
         </label>
         <div class="relative">
           <input
@@ -151,12 +159,12 @@ async function onSubmit() {
             autocomplete="new-password"
             class="h-10 w-full rounded-md border px-3 pr-10 text-sm text-slate-900 outline-none ring-slate-300 transition focus:ring-2"
             :class="errors.sshPassword ? 'border-red-300 bg-red-50' : 'border-slate-200 bg-white'"
-            placeholder="留空则由系统自动生成"
+            :placeholder="t('application.sshPasswordPlaceholder')"
           />
           <button
             type="button"
             class="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 transition hover:text-slate-600"
-            :aria-label="sshPasswordVisible ? '隐藏密码' : '显示密码'"
+            :aria-label="sshPasswordVisible ? t('common.hidePassword') : t('common.showPassword')"
             @click="sshPasswordVisible = !sshPasswordVisible"
           >
             <EyeOff v-if="sshPasswordVisible" class="size-4" />
@@ -165,7 +173,7 @@ async function onSubmit() {
         </div>
         <p v-if="errors.sshPassword" class="mt-1 text-xs text-red-600">{{ errors.sshPassword }}</p>
         <p v-else class="mt-1 text-xs text-slate-400">
-          填写后将用于本次授权账号的 SSH 登录；不填则由系统在授权完成后生成初始密码。
+          {{ t('application.sshPasswordHint') }}
         </p>
       </div>
 
@@ -175,14 +183,14 @@ async function onSubmit() {
           class="h-10 rounded-md border border-slate-200 px-4 text-sm font-medium text-slate-700 transition hover:bg-zinc-50"
           @click="router.back()"
         >
-          取消
+          {{ t('common.cancel') }}
         </button>
         <button
           type="submit"
           class="h-10 min-w-[6rem] rounded-md bg-slate-900 px-4 text-sm font-medium text-white transition hover:bg-slate-800 disabled:opacity-60"
           :disabled="submitting || sortedServers.length === 0"
         >
-          {{ submitting ? '提交中…' : '提交申请' }}
+          {{ submitting ? t('application.submitting') : t('application.submit') }}
         </button>
       </div>
     </form>

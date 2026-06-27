@@ -1,9 +1,9 @@
 import type { ServerStatus } from '@/types/public'
 
-export const SERVER_STATUS_LABEL: Record<ServerStatus, string> = {
-  ONLINE: '在线',
-  OFFLINE: '离线',
-  MAINTENANCE: '维护',
+export const SERVER_STATUS_LABEL_KEY: Record<ServerStatus, string> = {
+  ONLINE: 'serverStatus.ONLINE',
+  OFFLINE: 'serverStatus.OFFLINE',
+  MAINTENANCE: 'serverStatus.MAINTENANCE',
 }
 
 /** Tailwind palette tokens for presence dots (not application state colors). */

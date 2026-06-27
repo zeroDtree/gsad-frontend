@@ -9,6 +9,7 @@ import {
   Zap,
 } from 'lucide-vue-next'
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { AUDIT_STATUS_MAP, STATUS_COLOR_CLASS } from '@/constants/auditStatus'
 import type { AuditStatus } from '@/types/application'
@@ -18,6 +19,8 @@ const props = defineProps<{
   /** Render without icon when true */
   noIcon?: boolean
 }>()
+
+const { t } = useI18n()
 
 const meta = computed(() => AUDIT_STATUS_MAP[props.status])
 const colorClass = computed(() => STATUS_COLOR_CLASS[meta.value.color])
@@ -41,6 +44,6 @@ const IconComponent = computed(() => iconMap[meta.value.icon as keyof typeof ico
     :class="colorClass"
   >
     <component :is="IconComponent" v-if="!noIcon" class="size-3 shrink-0" />
-    {{ meta.label }}
+    {{ t(meta.labelKey) }}
   </span>
 </template>

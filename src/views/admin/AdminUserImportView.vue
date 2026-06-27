@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { importUsersCsv } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 import type { UserImportResponse } from '@/types/apiEnvelope'
 
+const { t } = useI18n()
 const ui = useUiStore()
 
 const csvFile = ref<File | null>(null)
@@ -25,7 +27,7 @@ function onFileChange(event: Event) {
 function validate(): boolean {
   fileError.value = ''
   if (!csvFile.value) {
-    fileError.value = '请选择 CSV 文件'
+    fileError.value = t('validation.selectCsvFile')
     return false
   }
   return true
@@ -38,7 +40,7 @@ async function onSubmit() {
   submitting.value = true
   try {
     result.value = await importUsersCsv(csvFile.value)
-    ui.pushToast({ type: 'success', message: '导入完成' })
+    ui.pushToast({ type: 'success', message: t('admin.importComplete') })
   } catch {
     // Errors are already handled by the http interceptor toast
   } finally {
@@ -50,11 +52,14 @@ async function onSubmit() {
 <template>
   <div class="mx-auto max-w-3xl px-6 py-8 lg:px-10 lg:py-10">
     <header class="mb-8">
-      <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">管理</p>
-      <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">用户导入</h1>
+      <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+        {{ t('admin.section') }}
+      </p>
+      <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
+        {{ t('admin.userImport') }}
+      </h1>
       <p class="mt-2 max-w-lg text-sm leading-relaxed text-slate-500">
-        上传 CSV 批量创建 GSAD 账号。必填列：email、linux_username、initial_password（至少 8
-        位）。请自行通过安全渠道分发初始密码。
+        {{ t('admin.userImportDesc') }}
       </p>
     </header>
 
@@ -63,7 +68,7 @@ async function onSubmit() {
       @submit.prevent="onSubmit"
     >
       <div>
-        <p class="mb-1.5 text-sm font-medium text-slate-700">CSV 表头</p>
+        <p class="mb-1.5 text-sm font-medium text-slate-700">{{ t('admin.csvHeader') }}</p>
         <pre
           class="overflow-x-auto rounded-md border border-slate-100 bg-zinc-50 px-3 py-2 text-xs text-slate-600"
           >{{ CSV_HEADER }}</pre
@@ -72,7 +77,7 @@ async function onSubmit() {
 
       <div>
         <label class="mb-1.5 block text-sm font-medium text-slate-700" for="f-csv-file">
-          CSV 文件 <span class="text-red-500">*</span>
+          {{ t('admin.csvFile') }} <span class="text-red-500">*</span>
         </label>
         <input
           id="f-csv-file"
@@ -90,25 +95,25 @@ async function onSubmit() {
           class="h-10 min-w-[6rem] rounded-md bg-slate-900 px-4 text-sm font-medium text-white transition hover:bg-slate-800 disabled:opacity-60"
           :disabled="submitting"
         >
-          {{ submitting ? '导入中…' : '开始导入' }}
+          {{ submitting ? t('admin.importing') : t('admin.startImport') }}
         </button>
       </div>
     </form>
 
     <section v-if="result" class="mt-8 space-y-6">
       <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 class="text-sm font-semibold text-slate-900">导入结果</h2>
+        <h2 class="text-sm font-semibold text-slate-900">{{ t('admin.importResult') }}</h2>
         <dl class="mt-4 grid grid-cols-3 gap-4 text-center">
           <div class="rounded-lg bg-emerald-50 px-3 py-2">
-            <dt class="text-xs text-emerald-700">新建</dt>
+            <dt class="text-xs text-emerald-700">{{ t('common.created') }}</dt>
             <dd class="text-lg font-semibold text-emerald-900">{{ result.created }}</dd>
           </div>
           <div class="rounded-lg bg-amber-50 px-3 py-2">
-            <dt class="text-xs text-amber-700">跳过</dt>
+            <dt class="text-xs text-amber-700">{{ t('common.skipped') }}</dt>
             <dd class="text-lg font-semibold text-amber-900">{{ result.skipped }}</dd>
           </div>
           <div class="rounded-lg bg-red-50 px-3 py-2">
-            <dt class="text-xs text-red-700">错误</dt>
+            <dt class="text-xs text-red-700">{{ t('common.errors') }}</dt>
             <dd class="text-lg font-semibold text-red-900">{{ result.errors.length }}</dd>
           </div>
         </dl>
@@ -118,13 +123,13 @@ async function onSubmit() {
         v-if="result.errors.length > 0"
         class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
       >
-        <h2 class="text-sm font-semibold text-slate-900">错误明细</h2>
+        <h2 class="text-sm font-semibold text-slate-900">{{ t('admin.errorDetails') }}</h2>
         <div class="mt-3 overflow-x-auto">
           <table class="w-full text-left text-sm">
             <thead>
               <tr class="border-b border-slate-100 text-xs text-slate-500">
-                <th class="pb-2 pr-4 font-medium">行号</th>
-                <th class="pb-2 font-medium">原因</th>
+                <th class="pb-2 pr-4 font-medium">{{ t('admin.rowNumber') }}</th>
+                <th class="pb-2 font-medium">{{ t('common.reason') }}</th>
               </tr>
             </thead>
             <tbody>

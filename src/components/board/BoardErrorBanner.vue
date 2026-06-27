@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { AlertCircle } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
 
 import RefreshButton from '@/components/ui/RefreshButton.vue'
 
@@ -11,6 +12,8 @@ defineProps<{
 const emit = defineEmits<{
   retry: []
 }>()
+
+const { t } = useI18n()
 </script>
 
 <template>
@@ -22,10 +25,15 @@ const emit = defineEmits<{
     >
       <AlertCircle class="mt-0.5 size-4 shrink-0 text-rose-600" />
       <div class="min-w-0 flex-1">
-        <p class="font-medium">无法加载看板</p>
+        <p class="font-medium">{{ t('board.loadFailedTitle') }}</p>
         <p class="mt-0.5 text-rose-900/90">{{ message }}</p>
       </div>
-      <RefreshButton variant="banner" label="重试" :loading="loading" @click="emit('retry')" />
+      <RefreshButton
+        variant="banner"
+        :label="t('common.retry')"
+        :loading="loading"
+        @click="emit('retry')"
+      />
     </div>
   </Transition>
 </template>

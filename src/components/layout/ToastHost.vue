@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { X } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
 
 import { useUiStore } from '@/stores/ui'
 
+const { t } = useI18n()
 const ui = useUiStore()
 
 function tone(type: string) {
@@ -19,17 +21,17 @@ function tone(type: string) {
   >
     <TransitionGroup name="toast">
       <div
-        v-for="t in ui.toasts"
-        :key="t.id"
+        v-for="toast in ui.toasts"
+        :key="toast.id"
         class="pointer-events-auto flex items-start gap-2 rounded-lg border px-3 py-2.5 text-sm shadow-sm transition"
-        :class="tone(t.type)"
+        :class="tone(toast.type)"
       >
-        <p class="min-w-0 flex-1 leading-snug">{{ t.message }}</p>
+        <p class="min-w-0 flex-1 leading-snug">{{ toast.message }}</p>
         <button
           type="button"
           class="rounded p-0.5 text-current opacity-60 hover:opacity-100"
-          :aria-label="'关闭'"
-          @click="ui.dismiss(t.id)"
+          :aria-label="t('common.close')"
+          @click="ui.dismiss(toast.id)"
         >
           <X class="size-4 shrink-0" />
         </button>

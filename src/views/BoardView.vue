@@ -3,6 +3,7 @@ import { useIntervalFn } from '@vueuse/core'
 import { ArrowRight } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
 import { onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 
 import BoardEmptyState from '@/components/board/BoardEmptyState.vue'
@@ -12,6 +13,7 @@ import ServerList from '@/components/board/ServerList.vue'
 import ListPagination from '@/components/ui/ListPagination.vue'
 import { useBoardStore } from '@/stores/board'
 
+const { t } = useI18n()
 const board = useBoardStore()
 const {
   items,
@@ -61,18 +63,21 @@ onUnmounted(() => {
   <div class="mx-auto max-w-6xl px-6 py-8 lg:px-10 lg:py-10">
     <header class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
       <div>
-        <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">公开看板</p>
-        <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">GPU 资源负载</h1>
+        <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+          {{ t('board.eyebrow') }}
+        </p>
+        <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
+          {{ t('board.title') }}
+        </h1>
         <p class="mt-2 max-w-xl text-sm leading-relaxed text-slate-500">
-          按资源等级与在线状态浏览节点，辅助申请前决策。数据每
-          {{ Math.round(board.pollIntervalMs / 1000) }} 秒自动刷新。
+          {{ t('board.description', { seconds: Math.round(board.pollIntervalMs / 1000) }) }}
         </p>
       </div>
       <RouterLink
         to="/applications/new"
         class="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-md bg-slate-900 px-4 text-sm font-medium text-white transition hover:bg-slate-800"
       >
-        立即申请
+        {{ t('board.applyNow') }}
         <ArrowRight class="size-4 opacity-80" />
       </RouterLink>
     </header>
@@ -125,13 +130,13 @@ onUnmounted(() => {
           v-else-if="!loading && !errorMessage && items.length > 0 && filteredItems.length === 0"
           class="rounded-xl border border-dashed border-slate-200 bg-zinc-50/50 px-6 py-12 text-center text-sm text-slate-600"
         >
-          当前筛选条件下暂无节点，请调整筛选或
+          {{ t('board.noNodesFiltered') }}
           <button
             type="button"
             class="font-medium text-slate-900 underline-offset-2 hover:underline"
             @click="resetFilters"
           >
-            重置筛选
+            {{ t('common.resetFilters') }}
           </button>
         </div>
       </Transition>
