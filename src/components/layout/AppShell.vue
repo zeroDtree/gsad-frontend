@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 
 import AppSidebar from '@/components/layout/AppSidebar.vue'
+import LocaleSwitcher from '@/components/layout/LocaleSwitcher.vue'
 import ToastHost from '@/components/layout/ToastHost.vue'
 
 const route = useRoute()
@@ -11,6 +12,7 @@ const isAuthPage = computed(() => Boolean(route.meta.authPage))
 
 <template>
   <div class="flex min-h-svh items-start bg-zinc-50">
+    <LocaleSwitcher />
     <AppSidebar v-if="!isAuthPage" />
     <div
       class="relative flex min-h-svh min-w-0 flex-1 flex-col"

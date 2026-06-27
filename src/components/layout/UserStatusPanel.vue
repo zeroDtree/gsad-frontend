@@ -3,23 +3,15 @@ import { KeyRound, LogOut, UserRound } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRouter } from 'vue-router'
 
-import { useLocale } from '@/composables/useLocale'
 import { useAuthStore } from '@/stores/auth'
-import type { AppLocale } from '@/i18n'
 
 const { t } = useI18n()
-const { currentLocale, setLocale } = useLocale()
 const auth = useAuthStore()
 const router = useRouter()
 
 async function logout() {
   await auth.logout()
   void router.push('/login')
-}
-
-function onLocaleChange(event: Event) {
-  const value = (event.target as HTMLSelectElement).value as AppLocale
-  setLocale(value)
 }
 </script>
 
@@ -42,18 +34,6 @@ function onLocaleChange(event: Event) {
         </p>
       </div>
     </div>
-
-    <label class="mt-2 block">
-      <span class="sr-only">{{ t('locale.label') }}</span>
-      <select
-        :value="currentLocale"
-        class="h-8 w-full rounded-md border border-slate-200 bg-white px-2 text-[11px] font-medium text-slate-700 outline-none ring-slate-300 transition focus:ring-2"
-        @change="onLocaleChange"
-      >
-        <option value="zh-CN">{{ t('locale.zhCN') }}</option>
-        <option value="en">{{ t('locale.en') }}</option>
-      </select>
-    </label>
 
     <RouterLink
       v-if="auth.isAuthenticated"
