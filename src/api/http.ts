@@ -11,8 +11,12 @@ import {
 import { t } from '@/i18n/t'
 
 declare module 'axios' {
+  interface AxiosRequestConfig {
+    skipAuthRedirect?: boolean
+  }
   interface InternalAxiosRequestConfig {
     __retryCount?: number
+    skipAuthRedirect?: boolean
   }
 }
 
@@ -152,14 +156,16 @@ http.interceptors.response.use(
 
     if (status === 401 || biz === BusinessCode.UNAUTHORIZED) {
       await clearAuthFromInterceptor()
-      await toastFromInterceptor({
-        type: 'error',
-        message: getLocalizedErrorForCode(BusinessCode.UNAUTHORIZED),
-      })
-      const { router } = await import('@/router')
-      const cur = router.currentRoute.value
-      if (!cur.meta.authPage) {
-        void router.replace({ path: '/login', query: { redirect: cur.fullPath } })
+      if (!config?.skipAuthRedirect) {
+        await toastFromInterceptor({
+          type: 'error',
+          message: getLocalizedErrorForCode(BusinessCode.UNAUTHORIZED),
+        })
+        const { router } = await import('@/router')
+        const cur = router.currentRoute.value
+        if (!cur.meta.authPage) {
+          void router.replace({ path: '/login', query: { redirect: cur.fullPath } })
+        }
       }
     } else if (status === 403 || biz === BusinessCode.FORBIDDEN) {
       await toastFromInterceptor({
