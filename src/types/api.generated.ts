@@ -457,8 +457,6 @@ export interface components {
             serverId: string;
             /** @description Optional SSH password for the granted account */
             sshPassword?: string;
-            /** @description When true, install Miniconda during provisioning; otherwise copy install script only */
-            installMiniconda?: boolean;
         };
         /** @description Application record; SSH fields appear when auditStatus is ACTIVE. */
         ApplicationVO: {
@@ -472,7 +470,6 @@ export interface components {
             sshUsername?: string;
             initialPassword?: string;
             credentialsReady?: boolean;
-            installMiniconda?: boolean;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */

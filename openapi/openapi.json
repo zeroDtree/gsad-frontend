@@ -960,10 +960,6 @@
             "minLength": 8,
             "maxLength": 128,
             "description": "Optional SSH password for the granted account"
-          },
-          "installMiniconda": {
-            "type": "boolean",
-            "description": "When true, install Miniconda during provisioning; otherwise copy install script only"
           }
         }
       },
@@ -980,7 +976,6 @@
           "sshUsername": { "type": "string" },
           "initialPassword": { "type": "string" },
           "credentialsReady": { "type": "boolean" },
-          "installMiniconda": { "type": "boolean" },
           "createdAt": { "type": "string", "format": "date-time" },
           "updatedAt": { "type": "string", "format": "date-time" }
         }
