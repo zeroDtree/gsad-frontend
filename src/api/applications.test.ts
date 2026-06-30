@@ -122,4 +122,27 @@ describe('toCreateApplicationWireBody', () => {
 
     expect(body.sshPassword).toBe('longpassword')
   })
+
+  it('includes installMiniconda when true', () => {
+    const body = toCreateApplicationWireBody({
+      server_id: 'gpu-001',
+      install_miniconda: true,
+    })
+
+    expect(body.installMiniconda).toBe(true)
+  })
+
+  it('omits installMiniconda when false or unset', () => {
+    expect(
+      toCreateApplicationWireBody({
+        server_id: 'gpu-001',
+      }).installMiniconda,
+    ).toBeUndefined()
+    expect(
+      toCreateApplicationWireBody({
+        server_id: 'gpu-001',
+        install_miniconda: false,
+      }).installMiniconda,
+    ).toBeUndefined()
+  })
 })

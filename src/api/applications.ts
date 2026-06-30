@@ -59,6 +59,8 @@ export function toApplicationItem(vo: ApplicationVO): ApplicationItem | null {
     server_ip: readStr(raw, 'serverIp') || undefined,
     ssh_username: readStr(raw, 'sshUsername') || undefined,
     initial_password: readStr(raw, 'initialPassword') || undefined,
+    install_miniconda:
+      typeof raw.installMiniconda === 'boolean' ? raw.installMiniconda : undefined,
   }
 }
 
@@ -71,6 +73,7 @@ export function toCreateApplicationWireBody(
   }
   const sshPassword = payload.ssh_password?.trim()
   if (sshPassword) body.sshPassword = sshPassword
+  if (payload.install_miniconda === true) body.installMiniconda = true
   return body
 }
 

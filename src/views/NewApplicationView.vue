@@ -18,6 +18,7 @@ const boardStore = useBoardStore()
 
 const serverId = ref('')
 const sshPassword = ref('')
+const installMiniconda = ref(false)
 const sshPasswordVisible = ref(false)
 const submitting = ref(false)
 
@@ -84,6 +85,7 @@ async function onSubmit() {
     const newId = await appStore.createApplication({
       server_id: serverId.value,
       ...(sshPasswordTrimmed ? { ssh_password: sshPasswordTrimmed } : {}),
+      ...(installMiniconda.value ? { install_miniconda: true } : {}),
     })
 
     ui.pushToast({ type: 'success', message: t('application.submitted') })
@@ -175,6 +177,23 @@ async function onSubmit() {
         <p v-else class="mt-1 text-xs text-slate-400">
           {{ t('application.sshPasswordHint') }}
         </p>
+      </div>
+
+      <div class="flex items-start gap-3">
+        <input
+          id="f-install-miniconda"
+          v-model="installMiniconda"
+          type="checkbox"
+          class="mt-1 size-4 rounded border-slate-300 text-slate-900 focus:ring-slate-300"
+        />
+        <div>
+          <label class="text-sm font-medium text-slate-700" for="f-install-miniconda">
+            {{ t('application.installMiniconda') }}
+          </label>
+          <p class="mt-1 text-xs text-slate-400">
+            {{ t('application.installMinicondaHint') }}
+          </p>
+        </div>
       </div>
 
       <div class="flex items-center justify-end gap-3 border-t border-slate-100 pt-4">

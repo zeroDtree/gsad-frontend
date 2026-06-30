@@ -23,12 +23,15 @@ export interface ApplicationItem {
   ssh_username?: string
   /** May be omitted on later list polls after first delivery */
   initial_password?: string
+  /** Whether Miniconda was requested at submit time */
+  install_miniconda?: boolean
 }
 
 /** UI/form payload for POST /api/applications (mapped to CreateApplicationRequest on the wire). */
 export interface CreateApplicationPayload {
   server_id: string
   ssh_password?: string
+  install_miniconda?: boolean
 }
 
 export interface ApplicationListParams {

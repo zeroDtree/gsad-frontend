@@ -239,6 +239,19 @@ function handleBackdrop(e: MouseEvent) {
                 </p>
               </div>
 
+              <div>
+                <p class="mb-1 text-xs font-medium text-slate-500">
+                  {{ t('application.installMiniconda') }}
+                </p>
+                <p class="text-sm text-slate-700">
+                  {{
+                    application.install_miniconda
+                      ? t('application.installMinicondaYes')
+                      : t('application.installMinicondaNo')
+                  }}
+                </p>
+              </div>
+
               <div
                 v-if="
                   application.comment &&
